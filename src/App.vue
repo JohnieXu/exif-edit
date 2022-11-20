@@ -42,33 +42,33 @@ body {
   flex: 1;
   flex-direction: row;
   justify-content: center;
-  align-items: center;
-  margin: 100px 22vw;
+  align-items: stretch;
+  padding: 100px 22vw;
   /* max-width: 1200px; */
 }
 @media screen  and (max-width: 1600px){
   #app {
-    margin: 100px 200px;
+    padding: 100px 200px;
   }
 }
 @media screen  and (max-width: 1400px){
   #app {
-    margin: 100px 140px;
+    padding: 100px 140px;
   }
 }
 @media screen  and (max-width: 1000px){
   #app {
-    margin: 100px 100px;
+    padding: 100px 100px;
   }
 }
 @media screen and (max-width: 850px) {
   #app {
-    margin: 40px;
+    padding: 40px;
   }
 }
 @media screen  and (max-width: 700px){
   #app {
-    margin: 20px 20px;
+    padding: 20px 20px;
   }
 }
 #app .pe_exif-edit {
