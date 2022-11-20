@@ -5,7 +5,9 @@
   "description": "一款基于 vue 的图片 exif 数据编辑器组件。An exif data edtior component with javascript(based on vue).",
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
+    "build:app": "vue-cli-service build",
+    "build:lib": "vue-cli-service build --target lib --name exifEdit src/components/ExifEdit.vue",
+    "build:wc": "vue-cli-service build --target wc --name exif-edit src/components/ExifEdit.vue",
     "lint": "vue-cli-service lint"
   },
   "keywords": [
