@@ -14,8 +14,8 @@ export default {
     ExifEdit
   },
   methods: {
-    handleExifEditChange ({ b64: imgData }) {
-      download(imgData, `${Date.now()}.jpg`, 'image/jpeg')
+    handleExifEditChange ({ b64: imgData, fileName }) {
+      download(imgData, fileName, 'image/jpeg')
     }
   }
 }

@@ -6,42 +6,49 @@
       <div v-else :class="bem('preview-image', 'placeholder')">
         <div :class="bem('preview-image-icon')">
           <div v-html="imagePlaceholder"></div>
-          <input ref="file" :class="bem('file')" type="file" name="file" id="file" @change="handleFileChange" />
+          <input ref="file" :class="bem('file')" type="file" name="file" id="file" accept="image/jpeg, image/tiff" @change="handleFileChange" />
         </div>
       </div>
     </div>
     <!-- 参数编辑 -->
     <div :class="bem('property')">
       <div :class="bem('row')">
+        <EIcon :name="exif.M || ''"></EIcon>
         <span :class="bem('row-label')">设备M</span>
         <input :class="bem('row-value')" type="string" v-model.trim="exif.M" placeholder="例如：NIKON Z 5" />
       </div>
       <div :class="bem('row')">
+        <EIcon name="F"></EIcon>
         <span :class="bem('row-label')">光圈F</span>
         <input :class="bem('row-value')" type="number" v-model.trim="exif.F" placeholder="例如：1.8" />
       </div>
       <div :class="bem('row')">
+        <EIcon name="S"></EIcon>
         <span :class="bem('row-label')">快门S</span>
         <input :class="bem('row-value')" type="text" v-model.trim="exif.S" placeholder="例如：1/200" />
       </div>
       <div :class="bem('row')">
+        <EIcon name="ISO"></EIcon>
         <span :class="bem('row-label')">感光度ISO</span>
         <input :class="bem('row-value')" type="number" v-model.trim="exif.ISO" placeholder="例如：100" />
       </div>
       <div :class="bem('row')">
+        <EIcon name="L"></EIcon>
         <span :class="bem('row-label')">焦距L</span>
         <input :class="bem('row-value')" type="number" v-model.trim="exif.L" placeholder="例如：35" />
       </div>
       <div :class="bem('row')">
+        <EIcon name="LEN"></EIcon>
         <span :class="bem('row-label')">镜头LEN</span>
         <input :class="bem('row-value')" type="string" v-model.trim="exif.LEN" placeholder="例如：NIKKOR Z 24-70mm f/4 S" />
       </div>
       <div :class="bem('row')">
+        <EIcon name="T"></EIcon>
         <span :class="bem('row-label')">拍摄时间T</span>
         <input :class="bem('row-value')" type="text" v-model.trim="exif.T" placeholder="例如：2022:11:14 10:00:00" />
       </div>
       <div :class="bem('actions')">
-        <button :class="bem('actions-button', 'clear')" @click="handleClearClick">清空</button>
+        <button :class="bem('actions-button', 'clear')" @click="handleClearClick"><EIcon name="clear"></EIcon>清空</button>
         <button :class="bem('actions-button', 'reset')" @click="handleResetClick">重置</button>
         <button :class="bem('actions-button', 'copy')" @click="handleCopyClick">复制</button>
         <button :class="bem('actions-button', 'paste')" @click="handlePasteClick">粘贴</button>
@@ -54,12 +61,15 @@
 <script>
 import piexifjs, { piexif } from 'piexifjs'
 import { createBEM } from '../utils/className'
+import EIcon from './EIcon.vue'
 
 const imagePlaceholder = '<svg t="1668863586543" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2945" width="128" height="128"><path d="M856.32 428.064c-94.816 0-144.928 90.656-185.184 163.52-25.824 46.688-52.512 94.944-78.72 97.568-28.544-5.664-48.096-23.2-70.656-43.36-31.744-28.448-67.488-60.288-130.464-57.952-76.8 3.328-146.24 57.696-206.4 161.696a32 32 0 0 0 55.392 32.064c48.48-83.84 100.224-127.488 153.728-129.824 36.928-1.44 56.96 16.576 84.992 41.664 26.88 24.096 57.344 51.36 105.888 59.392a31.584 31.584 0 0 0 5.216 0.448c64.704 0 101.44-66.464 136.96-130.72 28.352-51.328 57.504-104 97.184-123.072v369.984H128V231.68h488.16a32 32 0 1 0 0-64H96a32 32 0 0 0-32 32v701.824a32 32 0 0 0 32 32h760.32a32 32 0 0 0 32-32V460.064a32 32 0 0 0-32-32z" p-id="2946" fill="#8a8a8a"></path><path d="M180.96 424.32c0 57.952 47.168 105.12 105.12 105.12s105.12-47.168 105.12-105.12-47.168-105.088-105.12-105.088-105.12 47.136-105.12 105.088z m146.24 0a41.152 41.152 0 0 1-82.24 0 41.152 41.152 0 0 1 82.24 0zM960 174.656h-61.376V113.28a32 32 0 1 0-64 0v61.344H752.64a32 32 0 1 0 0 64h81.984v81.984a32 32 0 1 0 64 0V238.656H960a32 32 0 1 0 0-64z" p-id="2947" fill="#8a8a8a"></path></svg>'
 
 const bem = createBEM('exif-edit')
 
 const getExifData = (imgData) => {
+  // eslint-disable-next-line
+  // debugger
   return piexifjs.load(imgData)
 }
 
@@ -144,6 +154,9 @@ const defaultExif = {
 
 export default {
   name: 'ExifEdit',
+  components: {
+    EIcon
+  },
   props: {
     // jpg 图片的 base64 数据
     b64: {
@@ -182,6 +195,7 @@ export default {
     return {
       imgData: null,
       exif: cloneDeep(defaultExif),
+      file: null,
       imagePlaceholder,
       fileReader: {
         loading: false
@@ -189,6 +203,7 @@ export default {
     }
   },
   computed: {
+    // TODO: 优化-尝试使用 createObjectURL 方式来预览图片减少内存占用
     previewImageData () {
       return this.b64 || this.imgData || null
     }
@@ -260,7 +275,10 @@ export default {
       console.log(th, exif)
       const exifStr = piexifjs.dump({ '0th': th, Exif: exif })
       const nb64 = piexifjs.insert(exifStr, this.previewImageData)
-      this.$emit('change', { exif: this.exif, b64: nb64 })
+      const getFileName = (file) => {
+        return file && file.name ? `${file.name.replace(/\.jp(e)?g/, '')}_1.jpg` : `${Date.now()}.jpg`
+      }
+      this.$emit('change', { exif: this.exif, b64: nb64, fileName: getFileName(this.file) })
     },
     showNoExifToast (exif) {
       const _exif = cloneDeep(exif)
@@ -359,8 +377,10 @@ export default {
         this.showNoExifToast(exif)
         exif.version = exif.version || defaultExifVersion
         this.exif = exif
+        this.file = file
       }).catch((e) => {
         console.error(e)
+        this.file = null
       }).finally(() => {
         this.toggleLoading(false)
         clearFileValue()
@@ -403,6 +423,7 @@ export default {
   flex: 0 0 80px;
   text-align: left;
   font-size: 14px;
+  line-height: 1;
 }
 .pe_exif-edit__row-value {
   flex: 1;
