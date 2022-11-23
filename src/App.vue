@@ -30,7 +30,7 @@ html, body {
 body {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: stretch;
 }
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
@@ -41,7 +41,7 @@ body {
   display: flex;
   flex: 1;
   flex-direction: row;
-  justify-content: center;
+  justify-content: stretch;
   align-items: stretch;
   padding: 100px 22vw;
   /* max-width: 1200px; */
@@ -77,20 +77,25 @@ body {
 @media screen and (orientation: portrait) {
   #app .pe_exif-edit {
     flex-direction: column;
-    padding-top: 50px;
-    padding-bottom: 50px;
+    padding-top: 30px;
+    padding-bottom: 30px;
   }
   #app .pe_exif-edit__preview {
     display: flex;
     flex-direction: column;
     justify-content: center;
     padding: 20px 0;
+    padding-top: 0;
   }
   #app .pe_exif-edit__property {
     padding: 0;
   }
   #app .pe_exif-edit__actions {
     margin-top: 12px;
+  }
+  #app .pe_exif-edit__actions-button {
+    padding-top: 8px;
+    padding-bottom: 8px;
   }
 }
 </style>

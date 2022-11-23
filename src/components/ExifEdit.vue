@@ -397,7 +397,7 @@ export default {
 .pe_exif-edit {
   display: flex;
   flex-direction: row;
-  justify-content: center;
+  justify-content: stretch;
   align-content: center;
   background-color: #FBAB7E;
   background-image: linear-gradient(45deg, #FBAB7E 0%, #F7CE68 50%);
@@ -410,6 +410,7 @@ export default {
   padding: 0 20px;
   text-align: center;
   align-self: center;
+  align-items: center;
 }
 .pe_exif-edit__preview-image {
   width: 100%;
@@ -458,10 +459,14 @@ export default {
   margin-top: 12px;
   border: none;
   border-radius: 20px;
+  background-color: #fff;
   color: #333333;
   transition: all 0.2s ease-in-out;
   box-shadow: 1px 5px 10px #07a3ff36;
   font-size: 0;
+}
+.pe_exif-edit__actions-button:focus {
+  outline: none;
 }
 .pe_exif-edit__actions-button-icon {
   font-size: 0;
@@ -505,6 +510,7 @@ export default {
   right: 0;
   left: 0;
   bottom: 0;
+  width: 100%;
   appearance: none;
   opacity: 0;
   cursor: pointer;
