@@ -51,11 +51,26 @@
         <input :class="bem('row-value')" type="text" v-model.trim="exif.T" placeholder="例如：2022:11:14 10:00:00" />
       </div>
       <div :class="bem('actions')">
-        <button :class="bem('actions-button', 'clear')" @click="handleClearClick"><EIcon name="clear"></EIcon>清空</button>
-        <button :class="bem('actions-button', 'reset')" @click="handleResetClick">重置</button>
-        <button :class="bem('actions-button', 'copy')" @click="handleCopyClick">复制</button>
-        <button :class="bem('actions-button', 'paste')" @click="handlePasteClick">粘贴</button>
-        <button v-if="previewImageData" :class="bem('actions-button', ['save', 'primary'])" @click="handleSaveClick"><EIcon name="download"></EIcon>保存</button>
+        <button :class="bem('actions-button', 'clear')" @click="handleClearClick">
+          <EIcon :class="bem('actions-button-icon')" name="clear"></EIcon>
+          <span :class="bem('actions-button-text')">清空</span>
+        </button>
+        <button :class="bem('actions-button', 'reset')" @click="handleResetClick">
+          <EIcon :class="bem('actions-button-icon')" name="reset"></EIcon>
+          <span :class="bem('actions-button-text')">重置</span>
+        </button>
+        <button :class="bem('actions-button', 'copy')" @click="handleCopyClick">
+          <EIcon :class="bem('actions-button-icon')" name="copy"></EIcon>
+          <span :class="bem('actions-button-text')">复制</span>
+        </button>
+        <button :class="bem('actions-button', 'paste')" @click="handlePasteClick">
+          <EIcon :class="bem('actions-button-icon')" name="paste"></EIcon>
+          <span :class="bem('actions-button-text')">粘贴</span>
+        </button>
+        <button v-if="previewImageData" :class="bem('actions-button', ['save', 'primary'])" @click="handleSaveClick">
+          <EIcon :class="bem('actions-button-icon')" name="download"></EIcon>
+          <span  :class="bem('actions-button-text')">保存</span>
+        </button>
       </div>
     </div>
   </div>
@@ -64,10 +79,12 @@
 <script>
 import piexifjs, { piexif } from 'piexifjs'
 import { createBEM } from '../utils/className'
+import { isObjectKeySame, cloneDeep } from '../utils/common'
+import * as Constant from '../config/const'
 import EIcon from './EIcon.vue'
 import ExifLabel from './ExifLabel.vue'
 
-const imagePlaceholder = '<svg t="1668863586543" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2945" width="128" height="128"><path d="M856.32 428.064c-94.816 0-144.928 90.656-185.184 163.52-25.824 46.688-52.512 94.944-78.72 97.568-28.544-5.664-48.096-23.2-70.656-43.36-31.744-28.448-67.488-60.288-130.464-57.952-76.8 3.328-146.24 57.696-206.4 161.696a32 32 0 0 0 55.392 32.064c48.48-83.84 100.224-127.488 153.728-129.824 36.928-1.44 56.96 16.576 84.992 41.664 26.88 24.096 57.344 51.36 105.888 59.392a31.584 31.584 0 0 0 5.216 0.448c64.704 0 101.44-66.464 136.96-130.72 28.352-51.328 57.504-104 97.184-123.072v369.984H128V231.68h488.16a32 32 0 1 0 0-64H96a32 32 0 0 0-32 32v701.824a32 32 0 0 0 32 32h760.32a32 32 0 0 0 32-32V460.064a32 32 0 0 0-32-32z" p-id="2946" fill="#8a8a8a"></path><path d="M180.96 424.32c0 57.952 47.168 105.12 105.12 105.12s105.12-47.168 105.12-105.12-47.168-105.088-105.12-105.088-105.12 47.136-105.12 105.088z m146.24 0a41.152 41.152 0 0 1-82.24 0 41.152 41.152 0 0 1 82.24 0zM960 174.656h-61.376V113.28a32 32 0 1 0-64 0v61.344H752.64a32 32 0 1 0 0 64h81.984v81.984a32 32 0 1 0 64 0V238.656H960a32 32 0 1 0 0-64z" p-id="2947" fill="#8a8a8a"></path></svg>'
+const imagePlaceholder = '<svg t="1668863586543" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2945" width="128" height="128"><path d="M856.32 428.064c-94.816 0-144.928 90.656-185.184 163.52-25.824 46.688-52.512 94.944-78.72 97.568-28.544-5.664-48.096-23.2-70.656-43.36-31.744-28.448-67.488-60.288-130.464-57.952-76.8 3.328-146.24 57.696-206.4 161.696a32 32 0 0 0 55.392 32.064c48.48-83.84 100.224-127.488 153.728-129.824 36.928-1.44 56.96 16.576 84.992 41.664 26.88 24.096 57.344 51.36 105.888 59.392a31.584 31.584 0 0 0 5.216 0.448c64.704 0 101.44-66.464 136.96-130.72 28.352-51.328 57.504-104 97.184-123.072v369.984H128V231.68h488.16a32 32 0 1 0 0-64H96a32 32 0 0 0-32 32v701.824a32 32 0 0 0 32 32h760.32a32 32 0 0 0 32-32V460.064a32 32 0 0 0-32-32z" p-id="2946" fill="#faf9f9"></path><path d="M180.96 424.32c0 57.952 47.168 105.12 105.12 105.12s105.12-47.168 105.12-105.12-47.168-105.088-105.12-105.088-105.12 47.136-105.12 105.088z m146.24 0a41.152 41.152 0 0 1-82.24 0 41.152 41.152 0 0 1 82.24 0zM960 174.656h-61.376V113.28a32 32 0 1 0-64 0v61.344H752.64a32 32 0 1 0 0 64h81.984v81.984a32 32 0 1 0 64 0V238.656H960a32 32 0 1 0 0-64z" p-id="2947" fill="#faf9f9"></path></svg>'
 
 const bem = createBEM('exif-edit')
 
@@ -139,22 +156,9 @@ const removeNull = (obj) => {
   })
 }
 
-const cloneDeep = (data) => {
-  return JSON.parse(JSON.stringify(data))
-}
+const defaultExifVersion = cloneDeep(Constant.DEFUALT_EXIF_VERSION)
 
-const defaultExifVersion = '2.3.1'
-
-const defaultExif = {
-  version: defaultExifVersion,
-  M: null,
-  F: null,
-  S: null,
-  ISO: null,
-  L: null,
-  T: null,
-  LEN: null
-}
+const defaultExif = cloneDeep(Constant.DEFUALT_EXIF)
 
 export default {
   name: 'ExifEdit',
@@ -322,12 +326,6 @@ export default {
     handlePasteClick () {
       navigator.clipboard.readText().then((exifStr) => {
         console.log(exifStr)
-        const isObjectKeySame = (a, b) => {
-          const _a = JSON.stringify(Object.keys(a).sort())
-          const _b = JSON.stringify(Object.keys(b).sort())
-          console.log(_a, _b)
-          return _a === _b
-        }
         let exif = null
         try {
           exif = JSON.parse(exifStr)
@@ -401,6 +399,11 @@ export default {
   flex-direction: row;
   justify-content: center;
   align-content: center;
+  background-color: #FBAB7E;
+  background-image: linear-gradient(45deg, #FBAB7E 0%, #F7CE68 50%);
+  border-radius: 12px;
+  padding-left: 20px;
+  padding-right: 20px;
 }
 .pe_exif-edit__preview {
   flex: 1;
@@ -417,7 +420,8 @@ export default {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  margin-left: 20px;
+  padding-left: 20px;
+  padding-right: 20px;
 }
 .pe_exif-edit__row {
   display: flex;
@@ -436,13 +440,13 @@ export default {
   line-height: 1.4;
   font-size: 14px;
   outline: none;
-  border-radius: 0;
+  border-radius: 6px;
   color: #333;
   padding: 0.26em 0.6em;
-  border: 1px solid #e6e6e8;
+  border: 1px solid #fff;
 }
 .pe_exif-edit__row-value:focus {
-  border-color: #409eff;
+  border-color: #07A3FF;
 }
 .pe_exif-edit__actions {
   /* margin-top: 16px; */
@@ -453,10 +457,25 @@ export default {
   margin-right: 8px;
   margin-top: 12px;
   border: none;
+  border-radius: 20px;
+  color: #333333;
   transition: all 0.2s ease-in-out;
+  box-shadow: 1px 5px 10px #07a3ff36;
+  font-size: 0;
+}
+.pe_exif-edit__actions-button-icon {
+  font-size: 0;
+  display: inline-block;
+  vertical-align: middle;
+}
+.pe_exif-edit__actions-button-text {
+  font-size: 12px;
+  display: inline-block;
+  vertical-align: middle;
 }
 .pe_exif-edit__actions-button:hover {
-  opacity: 0.8;
+  /* opacity: 0.8; */
+  box-shadow: 2px 5px 10px #07a3ff4f;
 }
 .pe_exif-edit__actions-button--reset {
 }
@@ -464,7 +483,7 @@ export default {
   padding: 6px 30px;
 }
 .pe_exif-edit__actions-button--primary {
-  background-color: #409eff;
+  background-color: #07A3FF;
   color: #fff;
 }
 .pe_exif-edit__preview-image-icon {

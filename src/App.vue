@@ -74,4 +74,23 @@ body {
 #app .pe_exif-edit {
   flex: 1;
 }
+@media screen and (orientation: portrait) {
+  #app .pe_exif-edit {
+    flex-direction: column;
+    padding-top: 50px;
+    padding-bottom: 50px;
+  }
+  #app .pe_exif-edit__preview {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 20px 0;
+  }
+  #app .pe_exif-edit__property {
+    padding: 0;
+  }
+  #app .pe_exif-edit__actions {
+    margin-top: 12px;
+  }
+}
 </style>
