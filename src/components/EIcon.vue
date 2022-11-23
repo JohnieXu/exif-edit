@@ -104,7 +104,6 @@ export default {
     bem
   },
   render (h, context) {
-    console.log(context)
     if (!context.props.name) {
       return <span class={[bem(), context.data.class]}></span>
     }
