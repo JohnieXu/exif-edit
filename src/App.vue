@@ -1,17 +1,25 @@
 <template>
   <div id="app">
     <ExifEdit @change="handleExifEditChange" />
+    <EIconTest v-if="isEIconTestShow" />
   </div>
 </template>
 
 <script>
 import download from 'downloadjs'
 import ExifEdit from './components/ExifEdit.vue';
+import EIconTest from './components/EIconTest.vue';
 
 export default {
   name: 'App',
   components: {
-    ExifEdit
+    ExifEdit,
+    EIconTest
+  },
+  data () {
+    return {
+      isEIconTestShow: false
+    }
   },
   methods: {
     handleExifEditChange ({ b64: imgData, fileName }) {
