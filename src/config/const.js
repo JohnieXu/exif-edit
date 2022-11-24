@@ -1,4 +1,4 @@
-export const DEFUALT_EXIF_VERSION = '2.3.1'
+export const DEFUALT_EXIF_VERSION = '2.2'
 
 export const DEFUALT_EXIF = {
   version: DEFUALT_EXIF_VERSION,

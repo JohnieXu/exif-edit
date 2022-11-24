@@ -28,7 +28,7 @@
       <div :class="bem('row')">
         <EIcon name="S"></EIcon>
         <span :class="bem('row-label')">快门S</span>
-        <input :class="bem('row-value')" type="text" v-model.trim="exif.S" placeholder="例如：1/200" />
+        <input :class="bem('row-value')" type="text" v-model.trim="exif.S" placeholder="例如：200" />
       </div>
       <div :class="bem('row')">
         <EIcon name="ISO"></EIcon>
@@ -103,9 +103,10 @@ const parseExifData = (exifData) => {
   const L = exifData.Exif[piexif.ExifIFD.FocalLength]
   const LEN = exifData.Exif[piexif.ExifIFD.LensModel]
   const T = exifData.Exif[piexif.ExifIFD.DateTimeOriginal]
+  console.log('parseExifData\nM, F, S, ISO, L, LEN, T\n', M, F, S, ISO, L, LEN, T)
   return {
     M: M || null,
-    F: F && F[0] && F[1] ? `${F[0] / F[1]}` : null,
+    F: F && F[0] && F[1] ? F[0] / F[1] : null,
     S: S && S[0] && S[1] ? S[1] : null,
     ISO: ISO || null,
     L: L && L[0] && L[1] ? L[0] / L[1] : null,
@@ -270,10 +271,11 @@ export default {
       const _L = L || this.exif.L
       const exif = {
         [piexif.ExifIFD.ExifVersion]: this.exif.version,
-        [piexif.ExifIFD.FNumber]: [Number(_F), 1],
+        // 光圈值包含小数时需要x100
+        [piexif.ExifIFD.FNumber]: `${_F}`.includes('.') ? [_F * 100, 1 * 100] : [_F, 1],
         [piexif.ExifIFD.ExposureTime]: [1, Number(_S)],
-        [piexif.ExifIFD.ISOSpeed]: ISO || this.exif.ISO,
-        [piexif.ExifIFD.ISOSpeedRatings]: ISO || this.exif.ISO,
+        [piexif.ExifIFD.ISOSpeed]: Number(ISO || this.exif.ISO),
+        [piexif.ExifIFD.ISOSpeedRatings]: Number(ISO || this.exif.ISO),
         [piexif.ExifIFD.FocalLength]: [Number(_L) * 10, 10],
         [piexif.ExifIFD.LensModel]: LEN || this.exif.LEN,
         [piexif.ExifIFD.DateTimeOriginal]: T || this.exif.T,
@@ -285,7 +287,7 @@ export default {
       const exifStr = piexifjs.dump({ '0th': th, Exif: exif })
       const nb64 = piexifjs.insert(exifStr, this.previewImageData)
       const getFileName = (file) => {
-        return file && file.name ? `${file.name.replace(/\.jp(e)?g/, '')}_1.jpg` : `${Date.now()}.jpg`
+        return file && file.name ? `${file.name.replace(/\.jp(e)?g/i, '')}_1.jpg` : `${Date.now()}.jpg`
       }
       this.$emit('change', { exif: this.exif, b64: nb64, fileName: getFileName(this.file) })
     },
@@ -384,6 +386,9 @@ export default {
       }).catch((e) => {
         console.error(e)
         this.file = null
+        this.imgData = null
+        const message = e.message.includes('invalid file data') ? '不支持所选图片格式' : e.message
+        window.alert(`解析图片 Exif 数据失败：${message}`)
       }).finally(() => {
         this.toggleLoading(false)
         clearFileValue()
