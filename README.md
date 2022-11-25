@@ -40,26 +40,26 @@ yarn lint
 
 ## 效果预览
 
+<p align="center">默认状态</p>
+
 ![1.jpg](docs/imgs/1.jpg)
 
-<p align="center" style="color: #B66112;">默认状态</p>
+<p align="center">显示 Exif 数据</p>
 
 ![2.jpg](docs/imgs/2.jpg)
 
-<p align="center" style="color: #B66112;">显示 Exif 数据</p>
+<p align="center">编辑 Exif 数据</p>
 
 ![3.jpg](docs/imgs/3.jpg)
 
-<p align="center" style="color: #B66112;">编辑 Exif 数据</p>
+<p align="center">校验不支持格式的图片</p>
 
 ![4.jpg](docs/imgs/4.jpg)
 
-<p align="center" style="color: #B66112;">校验不支持格式的图片</p>
+<p align="center">校验无 Exif 数据</p>
 
 ![5.jpg](docs/imgs/5.jpg)
 
-<p align="center" style="color: #B66112;">校验无 Exif 数据</p>
+<p align="center">读取的图片无 Exif 数据</p>
 
 ![6.jpg](docs/imgs/6.jpg)
-
-<p align="center" style="color: #B66112;">读取的图片无 Exif 数据</p>
