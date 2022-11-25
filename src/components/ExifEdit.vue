@@ -2,7 +2,7 @@
   <div :class="bem()">
     <!-- 图片预览 -->
     <div :class="bem('preview')">
-      <img v-if="previewImageData" :class="bem('preview-image')" :src="previewImageData" alt="img" />
+      <img v-if="previewImageData" :class="bem('preview-image')" :src="previewImageUrl" alt="img" />
       <div v-else :class="bem('preview-image', 'placeholder')">
         <div :class="bem('preview-image-icon')">
           <div v-html="imagePlaceholder"></div>
@@ -80,6 +80,7 @@
 import piexifjs, { piexif } from 'piexifjs'
 import { createBEM } from '../utils/className'
 import { isObjectKeySame, cloneDeep } from '../utils/common'
+import { createObjectURL, revokeObjectURL } from '../utils/file'
 import * as Constant from '../config/const'
 import EIcon from './EIcon.vue'
 import ExifLabel from './ExifLabel.vue'
@@ -204,6 +205,7 @@ export default {
   data () {
     return {
       imgData: null,
+      previewImageUrl: null, // 用于预览的图片 URL
       exif: cloneDeep(defaultExif),
       file: null,
       imagePlaceholder,
@@ -213,7 +215,6 @@ export default {
     }
   },
   computed: {
-    // TODO: 优化-尝试使用 createObjectURL 方式来预览图片减少内存占用
     previewImageData () {
       return this.b64 || this.imgData || null
     }
@@ -301,6 +302,8 @@ export default {
     },
     handleClearClick () {
       this.imgData = null
+      this.previewImageUrl && revokeObjectURL(this.previewImageUrl)
+      this.previewImageUrl = null
       this.exif = cloneDeep(defaultExif)
       this.$emit('update:b64', null)
     },
@@ -383,10 +386,13 @@ export default {
         exif.version = exif.version || defaultExifVersion
         this.exif = exif
         this.file = file
+        this.previewImageUrl = createObjectURL(file)[0]
       }).catch((e) => {
         console.error(e)
         this.file = null
         this.imgData = null
+        this.previewImageUrl && revokeObjectURL(this.previewImageUrl)
+        this.previewImageUrl = null
         const message = e.message.includes('invalid file data') ? '不支持所选图片格式' : e.message
         window.alert(`解析图片 Exif 数据失败：${message}`)
       }).finally(() => {
