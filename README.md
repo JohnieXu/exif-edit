@@ -5,7 +5,7 @@
 An exif data edtior component with javascript(based on vue).
 
 <p align="center">
-  <img src="./docs/imgs/1.jpg" alt="预览二维码" width="400" />
+  <img src="./docs/imgs/7.jpg" alt="7.jpg" width="400" />
 </p>
 
 ## 安装依赖
