@@ -67,6 +67,15 @@ docker-compose up -d
 docker-compose up -d --build
 ```
 
+## 打包发布
+
+### 发布 Docker 镜像
+
+```bash
+docker tag johniexu/exif-edit:latest johniexu/exif-edit:latest
+docker push johniexu/exif-edit:latest
+```
+
 ## 效果预览
 
 <p align="center">默认状态</p>
