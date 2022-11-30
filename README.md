@@ -38,6 +38,35 @@ yarn build:wc
 yarn lint
 ```
 
+## 生产环境启动
+
+### 方式一：Node.js 使用静态资源提供 web 服务
+
+```bash
+npm run build:app
+cd dist/
+npx http-server .
+```
+
+### 方式二：Docker 镜像
+
+```bash
+npm run build:docker # 构建镜像
+docker run -itd --name exif-edit --restart always -p 8080:80 exif-edit:latest
+```
+
+### 方式三：Docker Compose 一键启动
+
+```bash
+docker-compose up -d
+```
+
+修改了代码后需要重新构建镜像 `--build`，并且需要先执行完 `npm run build:app`
+
+```bash
+docker-compose up -d --build
+```
+
 ## 效果预览
 
 <p align="center">默认状态</p>
