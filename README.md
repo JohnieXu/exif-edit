@@ -52,7 +52,7 @@ npx http-server .
 
 ```bash
 npm run build:docker # 构建镜像
-docker run -itd --name exif-edit --restart always -p 8080:80 exif-edit:latest
+docker run -itd --name exif-edit --restart always -p 8080:80 johniexu/exif-edit:latest
 ```
 
 ### 方式三：Docker Compose 一键启动
