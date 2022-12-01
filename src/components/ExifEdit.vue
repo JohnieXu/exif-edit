@@ -81,6 +81,7 @@ import piexifjs, { piexif } from 'piexifjs'
 import { createBEM } from '../utils/className'
 import { isObjectKeySame, cloneDeep } from '../utils/common'
 import { createObjectURL, revokeObjectURL } from '../utils/file'
+import { captureException } from '../utils/sentry'
 import * as Constant from '../config/const'
 import EIcon from './EIcon.vue'
 import ExifLabel from './ExifLabel.vue'
@@ -325,6 +326,7 @@ export default {
       navigator.clipboard.writeText(exifStr).then(() => {
         console.log('复制成功')
       }).catch((e) => {
+        captureException(e)
         window.alert(`复制失败：${e.message}`)
       })
     },
@@ -336,23 +338,29 @@ export default {
           exif = JSON.parse(exifStr)
         } catch (e) {
           console.error(e)
+          captureException(e)
           window.alert('剪贴板参数不是 Exif 数据格式，请粘贴复制功能导出的 JSON 数据')
           return
         }
         if (!exif) {
-          console.error(new Error('no exif'))
+          let err = new Error('no exif')
+          console.error(err)
+          captureException(err)
           window.alert('剪贴板参数不是 Exif 数据格式，请粘贴复制功能导出的 JSON 数据')
           return
         }
         const targetExif = { ...defaultExif }
         if (!isObjectKeySame(exif, targetExif)) {
-          console.error(new Error('exif is invalid'))
+          let err = new Error('exif is invalid')
+          console.error(err)
+          captureException(err)
           window.alert('剪贴板参数不是 Exif 数据格式，请粘贴复制功能导出的 JSON 数据')
           return
         }
         this.exif = exif
         console.log('粘贴成功')
       }).catch((e) => {
+        captureException(e)
         window.alert(`粘贴失败：${e.message}`)
       })
     },
@@ -361,6 +369,7 @@ export default {
         this.insertExif()
       } catch (e) {
         console.error(e)
+        captureException(e)
         window.alert(`保存失败：${e.message}`)
       }
     },
@@ -389,6 +398,7 @@ export default {
         this.previewImageUrl = createObjectURL(file)[0]
       }).catch((e) => {
         console.error(e)
+        captureException(e)
         this.file = null
         this.imgData = null
         this.previewImageUrl && revokeObjectURL(this.previewImageUrl)
