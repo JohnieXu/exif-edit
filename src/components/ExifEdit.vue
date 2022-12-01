@@ -81,7 +81,7 @@ import piexifjs, { piexif } from 'piexifjs'
 import { createBEM } from '../utils/className'
 import { isObjectKeySame, cloneDeep } from '../utils/common'
 import { createObjectURL, revokeObjectURL } from '../utils/file'
-import { captureException } from '../utils/sentry'
+import { captureException, captureMessage } from '../utils/sentry'
 import * as Constant from '../config/const'
 import EIcon from './EIcon.vue'
 import ExifLabel from './ExifLabel.vue'
@@ -322,6 +322,11 @@ export default {
       this.exif = exif
     },
     handleCopyClick () {
+      if (!navigator.clipboard) {
+        captureMessage('粘贴失败: navigator.clipboard is undefined')
+        window.alert('当前系统不支持使用剪贴板')
+        return
+      }
       const exifStr = JSON.stringify(this.exif)
       navigator.clipboard.writeText(exifStr).then(() => {
         console.log('复制成功')
@@ -331,6 +336,11 @@ export default {
       })
     },
     handlePasteClick () {
+      if (!navigator.clipboard) {
+        captureMessage('粘贴失败: navigator.clipboard is undefined')
+        window.alert('当前系统不支持使用剪贴板')
+        return
+      }
       navigator.clipboard.readText().then((exifStr) => {
         console.log(exifStr)
         let exif = null
