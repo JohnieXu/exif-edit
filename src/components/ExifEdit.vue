@@ -323,7 +323,7 @@ export default {
     },
     handleCopyClick () {
       if (!navigator.clipboard) {
-        captureMessage('粘贴失败: navigator.clipboard is undefined')
+        captureMessage('复制失败: navigator.clipboard is undefined')
         window.alert('当前系统不支持使用剪贴板')
         return
       }
