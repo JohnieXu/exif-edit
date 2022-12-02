@@ -4,6 +4,8 @@
 
 An exif data edtior component with javascript(based on vue).
 
+预览地址：https://exif-edit.vercel.app/
+
 <p align="center">
   <img src="./docs/imgs/7.jpg" alt="7.jpg" width="400" />
 </p>
@@ -66,6 +68,9 @@ docker-compose up -d
 ```bash
 docker-compose up -d --build
 ```
+## 线上 Demo 部署
+
+使用 [vercel](https://vercel.com/dashboard) 部署，预览地址：https://exif-edit.vercel.app/
 
 ## 打包发布
 
