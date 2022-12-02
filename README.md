@@ -72,6 +72,19 @@ docker-compose up -d --build
 
 使用 [vercel](https://vercel.com/dashboard) 部署，预览地址：https://exif-edit.vercel.app/
 
+使用 hook 触发部署
+
+> 使用 GET 请求对应的 hook 地址即可触发vercel 自动构建部署
+
+```bash
+# 触发 master 分支部署
+curl -X GET https://api.vercel.com/v1/integrations/deploy/prj_ZvCedzuUkl1foP4QqcfjfUG1PfkR/qH9ujkhdFR
+```
+
+| 分支 | hook |
+|-----|-----|
+| master | https://api.vercel.com/v1/integrations/deploy/prj_ZvCedzuUkl1foP4QqcfjfUG1PfkR/qH9ujkhdFR |
+
 ## 打包发布
 
 ### 发布 Docker 镜像
