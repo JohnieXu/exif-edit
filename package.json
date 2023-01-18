@@ -26,6 +26,7 @@
   "dependencies": {
     "core-js": "^3.8.3",
     "downloadjs": "^1.4.7",
+    "konva": "^8.4.0",
     "piexifjs": "^1.0.6",
     "vue": "^2.6.14"
   },

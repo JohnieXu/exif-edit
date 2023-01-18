@@ -1,6 +1,8 @@
 <template>
   <div id="app">
-    <ExifEdit @change="handleExifEditChange" />
+    <TypeSelect v-model="type"></TypeSelect>
+    <ExifEdit v-show="type == 0" @change="handleExifEditChange" />
+    <WatermarkEdit v-show="type == 1" />
     <EIconTest v-if="isEIconTestShow" />
   </div>
 </template>
@@ -9,16 +11,21 @@
 import download from 'downloadjs'
 import ExifEdit from './components/ExifEdit.vue';
 import EIconTest from './components/EIconTest.vue';
+import TypeSelect from './components/TypeSelect.vue'
+import WatermarkEdit from './components/WatermarkEdit.vue'
 
 export default {
   name: 'App',
   components: {
     ExifEdit,
-    EIconTest
+    EIconTest,
+    TypeSelect,
+    WatermarkEdit
   },
   data () {
     return {
-      isEIconTestShow: false
+      isEIconTestShow: false,
+      type: "1"
     }
   },
   methods: {
@@ -48,7 +55,7 @@ body {
   color: #2c3e50;
   display: flex;
   flex: 1;
-  flex-direction: row;
+  flex-direction: column;
   justify-content: stretch;
   align-items: stretch;
   padding: 100px 22vw;
@@ -80,6 +87,9 @@ body {
   }
 }
 #app .pe_exif-edit {
+  flex: 1;
+}
+#app .pe_wartermark_edit {
   flex: 1;
 }
 @media screen and (orientation: portrait) {
