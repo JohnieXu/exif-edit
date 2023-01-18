@@ -4,6 +4,15 @@
   // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
   "configurations": [
+    {
+      "name": "JS字符串字节测试",
+      "program": "${workspaceFolder}/demo/string_byte.js",
+      "request": "launch",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "node"
+    },
   {
     "name": "Attach",
     "port": 9229,

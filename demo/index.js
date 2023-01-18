@@ -30,8 +30,9 @@ const parseExifData = (exifData) => {
 }
 
 function main() {
-  const dataURL = fs.readFileSync(path.resolve(__dirname, './dataURL.txt'), { encoding: 'utf-8' })
-  console.log(dataURL.length)
+  // const dataURL = fs.readFileSync(path.resolve(__dirname, './dataURL.txt'), { encoding: 'utf-8' })
+  // console.log(dataURL.length)
+  const dataURL = 'data:image/jpg;base64,' + fs.readFileSync(path.resolve(__dirname, './demo1.jpg'), 'base64')
   const exifData = getExifData(dataURL)
   console.log(exifData)
 }
