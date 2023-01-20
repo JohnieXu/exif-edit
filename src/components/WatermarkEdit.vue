@@ -50,7 +50,7 @@ const getImageSize = (file) => {
 }
 
 // 缩放比例
-const canvasRatio = window.pixelRatio || 2
+const canvasRatio = window.devicePixelRatio || 2
 
 export default {
   name: "WatermarkEdit",
@@ -96,7 +96,13 @@ export default {
       this.drawImage(layer1)
       this.drawWatermarkBackground(layer1)
       this.drawCameraData(layer1, { brand: 'Nikon', model: 'Z5' }, { padding: 40 })
-      this.drawExifData(layer1, {}, { padding: 40 })
+      this.drawExifData(layer1, {
+        L: 50,
+        F: 1.8,
+        S: 200,
+        ISO: 100,
+        T: '2023.01.18 14:00:00'
+      }, { padding: 40 })
     },
     drawImage(layer) {
       const image = new Konva.Image({
@@ -135,12 +141,19 @@ export default {
       layer.add(text)
     },
     drawExifData(layer, exif, { padding = 40 } = {}) {
+      const exifList = [
+        exif.L ? exif.L + 'mm' : undefined,
+        exif.F ? 'f/' + exif.F : undefined,
+        exif.S ? '1/' + exif.S : undefined,
+        exif.ISO ? 'ISO' + exif.ISO : undefined
+      ]
       const text1 = new Konva.Text({
         x: 0,
         y: (this.imageSize.height + 60) / canvasRatio,
-        text: '50mm f/1.8 1/200 ISO100',
+        text: exifList.join(' '),
         fontSize: 24,
         fontFamily: 'Calibri',
+        fontStyle: 'bold',
         fill: '#000',
         width: 500,
         padding,
@@ -149,7 +162,7 @@ export default {
       const text2 = new Konva.Text({
         x: 0,
         y: (this.imageSize.height + 60 + 20 + 60) / canvasRatio,
-        text: '2023.01.18 14:00:00',
+        text: exif.T,
         fontSize: 20,
         fontFamily: 'Calibri',
         fill: '#666',
@@ -158,12 +171,12 @@ export default {
         align: 'right'
       })
       const group = new Konva.Group({
-        x: 0,
+        x: this.imageSize / canvasRatio - 500,
         y: 0,
         draggable: true,
       })
       group.add(text1)
-      group.add(text2)
+      exif.T && group.add(text2)
       layer.add(group)
     },
     handleSaveClick() {
@@ -197,7 +210,7 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 .pe_wartermark_edit__save-container {
   margin-top: 50px;
 }
