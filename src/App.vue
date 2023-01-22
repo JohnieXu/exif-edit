@@ -28,7 +28,7 @@ export default {
   data () {
     return {
       isEIconTestShow: false,
-      type: "2"
+      type: "0"
     }
   },
   methods: {

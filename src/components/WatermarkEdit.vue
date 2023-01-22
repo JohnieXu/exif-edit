@@ -49,6 +49,15 @@ const getImageSize = (file) => {
   })
 }
 
+/**
+ * 开发环境执行
+ */
+const onDevelop = (fn, self, ...args) => {
+  if (process.env.NODE_ENV === 'development') {
+    fn.call(self, ...args)
+  }
+}
+
 // 缩放比例
 const canvasRatio = window.devicePixelRatio || 2
 
@@ -147,9 +156,16 @@ export default {
         exif.S ? '1/' + exif.S : undefined,
         exif.ISO ? 'ISO' + exif.ISO : undefined
       ]
+      const group = new Konva.Group({
+        x: this.imageSize.width / canvasRatio - 500,
+        y: this.imageSize.height / canvasRatio,
+        width: 500,
+        height: this.watermark.height,
+        // draggable: true,
+      })
       const text1 = new Konva.Text({
         x: 0,
-        y: (this.imageSize.height + 60) / canvasRatio,
+        y: 0,
         text: exifList.join(' '),
         fontSize: 24,
         fontFamily: 'Calibri',
@@ -157,23 +173,29 @@ export default {
         fill: '#000',
         width: 500,
         padding,
-        align: 'right'
+        align: 'left'
       })
       const text2 = new Konva.Text({
         x: 0,
-        y: (this.imageSize.height + 60 + 20 + 60) / canvasRatio,
+        // y: (this.imageSize.height + 60 + 20 + 60) / canvasRatio,
+        y: 30,
         text: exif.T,
         fontSize: 20,
         fontFamily: 'Calibri',
         fill: '#666',
         width: 500,
         padding,
-        align: 'right'
+        align: 'left'
       })
-      const group = new Konva.Group({
-        x: this.imageSize / canvasRatio - 500,
+      const rect1 = new Konva.Rect({
+        x: 0,
         y: 0,
-        draggable: true,
+        width: 500,
+        height: this.watermark.height,
+        fill: "#ff000060"
+      })
+      onDevelop(() => {
+        group.add(rect1)
       })
       group.add(text1)
       exif.T && group.add(text2)
