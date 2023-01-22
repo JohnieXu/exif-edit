@@ -2,6 +2,7 @@
   <div :class="bem()">
     <span :class="bem('button', value === '0' ? 'active' : '')" @click="handleItemClick('0')">Exif编辑</span>
     <span :class="bem('button', value === '1' ? 'active' : '')" @click="handleItemClick('1')">水印边框</span>
+    <span :class="bem('button', value === '2' ? 'active' : '')" @click="handleItemClick('2')">Demo</span>
   </div>
 </template>
 

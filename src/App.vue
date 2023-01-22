@@ -3,6 +3,7 @@
     <TypeSelect v-model="type"></TypeSelect>
     <ExifEdit v-show="type == 0" @change="handleExifEditChange" />
     <WatermarkEdit v-show="type == 1" />
+    <VDemo v-show="type == 2"/>
     <EIconTest v-if="isEIconTestShow" />
   </div>
 </template>
@@ -13,6 +14,7 @@ import ExifEdit from './components/ExifEdit.vue';
 import EIconTest from './components/EIconTest.vue';
 import TypeSelect from './components/TypeSelect.vue'
 import WatermarkEdit from './components/WatermarkEdit.vue'
+import VDemo from './components/Demo.vue'
 
 export default {
   name: 'App',
@@ -20,12 +22,13 @@ export default {
     ExifEdit,
     EIconTest,
     TypeSelect,
-    WatermarkEdit
+    WatermarkEdit,
+    VDemo
   },
   data () {
     return {
       isEIconTestShow: false,
-      type: "1"
+      type: "2"
     }
   },
   methods: {
@@ -41,6 +44,7 @@ html, body {
   height: 100%;
   margin: 0;
   padding: 0;
+  font-family: -apple-system,BlinkMacSystemFont,Helvetica Neue,Helvetica,Segoe UI,Arial,Roboto,PingFang SC,miui,Hiragino Sans GB,Microsoft Yahei,sans-serif;
 }
 body {
   display: flex;
