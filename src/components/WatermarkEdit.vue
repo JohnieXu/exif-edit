@@ -10,6 +10,7 @@
 </template>
 
 <script>
+/* eslint-disable no-unused-vars */
 import { createBEM } from '@/utils/className';
 import { createObjectURL } from '@/utils/file';
 import Konva from 'konva'
@@ -24,7 +25,7 @@ import Konva from 'konva'
 const bem = createBEM('wartermark_edit')
 
 /**
- * 获取图片像素大小、图片数据
+ * 从 file 文件获取图片像素大小、图片数据
  * @param {File} file 文件对象
  */
 const getImageSize = (file) => {
@@ -44,6 +45,29 @@ const getImageSize = (file) => {
     }
     image.onerror = (e) => {
       revoke()
+      reject(e)
+    }
+  })
+}
+
+/**
+ * 从图片链接或 dataURI 获取图片像素大小、图片数据
+ * @param {String} src 图片链接或 dataURI 字符串
+ */
+const getImageSizeFromSrc = (src) => {
+  return new Promise((resolve, reject) => {
+    const image = new Image()
+    image.src = src
+    image.onload = () => {
+      resolve({
+        imageSize: {
+          width: image.width,
+          height: image.height,
+        },
+        image
+      })
+    }
+    image.onerror = (e) => {
       reject(e)
     }
   })
@@ -138,10 +162,11 @@ export default {
       const text = new Konva.Text({
         // x: padding / canvasRatio,
         x: 0,
-        y: (this.imageSize.height + 60) / canvasRatio,
+        y: (this.imageSize.height + 40) / canvasRatio,
         text: model ? `${brand} ${model}` : brand,
         fontSize: 24,
-        fontFamily: 'Calibri',
+        fontFamily: '-apple-system,BlinkMacSystemFont,Helvetica Neue,Helvetica,Segoe UI,Arial,Roboto,PingFang SC,miui,Hiragino Sans GB,Microsoft Yahei,sans-serif',
+        fontStyle: 'bold',
         fill: '#000',
         width: 500,
         padding,
@@ -149,56 +174,90 @@ export default {
       })
       layer.add(text)
     },
-    drawExifData(layer, exif, { padding = 40 } = {}) {
+    async drawExifData(layer, exif, { padding = 40 } = {}) {
+      const config = {
+        text1: {
+          fontSize: 24,
+        },
+        text2: {
+          fontSize: 18,
+        },
+        fontFamily: '-apple-system,BlinkMacSystemFont,Helvetica Neue,Helvetica,Segoe UI,Arial,Roboto,PingFang SC,miui,Hiragino Sans GB,Microsoft Yahei,sans-serif',
+        textGap1: 14
+      }
       const exifList = [
         exif.L ? exif.L + 'mm' : undefined,
         exif.F ? 'f/' + exif.F : undefined,
         exif.S ? '1/' + exif.S : undefined,
         exif.ISO ? 'ISO' + exif.ISO : undefined
       ]
-      const group = new Konva.Group({
-        x: this.imageSize.width / canvasRatio - 500,
-        y: this.imageSize.height / canvasRatio,
-        width: 500,
-        height: this.watermark.height,
-        // draggable: true,
-      })
       const text1 = new Konva.Text({
         x: 0,
         y: 0,
         text: exifList.join(' '),
-        fontSize: 24,
-        fontFamily: 'Calibri',
+        fontSize: config.text1.fontSize,
+        fontFamily: config.fontFamily,
         fontStyle: 'bold',
         fill: '#000',
-        width: 500,
         padding,
         align: 'left'
       })
       const text2 = new Konva.Text({
-        x: 0,
-        // y: (this.imageSize.height + 60 + 20 + 60) / canvasRatio,
-        y: 30,
+        x: padding,
+        y: padding + config.text1.fontSize + config.textGap1,
         text: exif.T,
-        fontSize: 20,
-        fontFamily: 'Calibri',
+        fontSize: config.text2.fontSize,
+        fontFamily: config.fontFamily,
         fill: '#666',
-        width: 500,
-        padding,
+        width: text1.width(),
+        padding: 0,
         align: 'left'
       })
       const rect1 = new Konva.Rect({
         x: 0,
         y: 0,
-        width: 500,
+        width: text1.width(),
         height: this.watermark.height,
         fill: "#ff000060"
       })
-      onDevelop(() => {
-        group.add(rect1)
+      const group = new Konva.Group({
+        x: this.imageSize.width / canvasRatio - text1.width(),
+        y: this.imageSize.height / canvasRatio,
+        width: text1.width(),
+        height: this.watermark.height,
+        // draggable: true,
       })
+      group.width(text1.width())
+
+      // 绘制竖线
+      const logoWidth = config.text1.fontSize + config.text2.fontSize + config.textGap1
+      const line1 = new Konva.Line({
+        points: [padding / 2, padding, padding / 2, padding + logoWidth],
+        stroke: '#d8d8d8',
+        strokeWidth: 1,
+      })
+
+      group.add(line1)
+
+      // 绘制品牌 logo
+      const { image } = await getImageSizeFromSrc(require('@/assets/icons/leica.png'))
+      const image1 = new Konva.Image({
+        image,
+        x: -(logoWidth + 0),
+        y: padding,
+        width: logoWidth,
+        height: logoWidth,
+      })
+      
+      // 调试用
+      // onDevelop(() => {
+      //   group.add(rect1)
+      // })
+
       group.add(text1)
       exif.T && group.add(text2)
+      group.add(image1)
+
       layer.add(group)
     },
     handleSaveClick() {
