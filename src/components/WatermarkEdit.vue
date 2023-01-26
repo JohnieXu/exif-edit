@@ -11,9 +11,11 @@
 
 <script>
 /* eslint-disable no-unused-vars */
-import { createBEM } from '@/utils/className';
-import { createObjectURL } from '@/utils/file';
+import piexifjs, { piexif } from 'piexifjs'
+import { createBEM } from '@/utils/className'
+import { createObjectURL } from '@/utils/file'
 import Konva from 'konva'
+import { captureException, captureMessage } from '../utils/sentry'
 
 /**
  * 画布尺寸设计思路：
@@ -85,12 +87,54 @@ const onDevelop = (fn, self, ...args) => {
 // 缩放比例
 const canvasRatio = window.devicePixelRatio || 2
 
+const getExifData = (imgData) => {
+  // eslint-disable-next-line
+  // debugger
+  return piexifjs.load(imgData)
+}
+
+const parseExifData = (exifData) => {
+  if (!exifData) { return null }
+  const M = exifData['0th'][piexif.ImageIFD.Model]
+  const F = exifData.Exif[piexif.ExifIFD.FNumber]
+  const S = exifData.Exif[piexif.ExifIFD.ExposureTime]
+  const ISO = exifData.Exif[piexif.ExifIFD.ISOSpeedRatings]
+  const L = exifData.Exif[piexif.ExifIFD.FocalLength]
+  const LEN = exifData.Exif[piexif.ExifIFD.LensModel]
+  const T = exifData.Exif[piexif.ExifIFD.DateTimeOriginal]
+  console.log('parseExifData\nM, F, S, ISO, L, LEN, T\n', M, F, S, ISO, L, LEN, T)
+  return {
+    M: M || null,
+    F: F && F[0] && F[1] ? F[0] / F[1] : null,
+    S: S && S[0] && S[1] ? S[1] : null,
+    ISO: ISO || null,
+    L: L && L[0] && L[1] ? L[0] / L[1] : null,
+    LEN: LEN || null,
+    T: T || null
+  }
+}
+
+// eslint-disable-next-line no-unused-vars
+const getImageData = (file) => {
+  return new Promise((resolve, reject) => {
+    const fileReader = new FileReader()
+    fileReader.onload = (e) => {
+      resolve(e.target.result)
+    }
+    fileReader.onerror = (error) => {
+      reject(error)
+    }
+    fileReader.readAsDataURL(file)
+  })
+}
+
 export default {
   name: "WatermarkEdit",
   data() {
     return {
       file: null,
       image: null,
+      exif: null,
       // 选择的图片像素大小
       imageSize: {
         width: 0,
@@ -108,15 +152,44 @@ export default {
     bem,
     handleFileChange(e) {
       const files = e.target.files || []
-      if (!files[0]) { return }
-      this.file = files[0]
+      const file = files[0]
+      if (!file) { return }
+      this.file = file
       // console.log(this.file, files)
       getImageSize(this.file).then(({ imageSize, image }) => {
         this.imageSize = imageSize
         this.image = image
+      }).then(() => {
+        return getImageData(file).then((imgData) => {
+          const exifData = getExifData(imgData)
+          console.log(exifData)
+          const exif = parseExifData(exifData)
+          console.log(exif)
+          // this.showNoExifToast(exif)
+          // exif.version = exif.version || defaultExifVersion
+          this.exif = exif
+        }).catch((e) => {
+          console.error(e)
+          captureException(e)
+          // this.file = null
+          // this.imgData = null
+          const message = e.message.includes('invalid file data') ? '不支持所选图片格式' : e.message
+          window.alert(`解析图片 Exif 数据失败：${message}`)
+        }).finally(() => {
+          // this.toggleLoading(false)
+          // clearFileValue()
+        })
       }).then(this.initStage)
     },
     initStage() {
+      // TODO: 需要判断 exif 为非空对象
+      const exif = this.exif || {
+        L: 50,
+        F: 1.8,
+        S: 200,
+        ISO: 100,
+        T: '2023.01.18 14:00:00'
+      }
       const stage = new Konva.Stage({
         container: this.$refs.container,
         width: this.imageSize.width / canvasRatio,
@@ -128,14 +201,8 @@ export default {
 
       this.drawImage(layer1)
       this.drawWatermarkBackground(layer1)
-      this.drawCameraData(layer1, { brand: 'Nikon', model: 'Z5' }, { padding: 40 })
-      this.drawExifData(layer1, {
-        L: 50,
-        F: 1.8,
-        S: 200,
-        ISO: 100,
-        T: '2023.01.18 14:00:00'
-      }, { padding: 40 })
+      this.drawCameraData(layer1, { brand: '', model: this.exif.M || 'NIKON Z 5' }, { padding: 40 })
+      this.drawExifData(layer1, exif, { padding: 40 })
     },
     drawImage(layer) {
       const image = new Konva.Image({
@@ -162,9 +229,9 @@ export default {
       const text = new Konva.Text({
         // x: padding / canvasRatio,
         x: 0,
-        y: (this.imageSize.height + 40) / canvasRatio,
+        y: (this.imageSize.height + 36) / canvasRatio,
         text: model ? `${brand} ${model}` : brand,
-        fontSize: 24,
+        fontSize: 28,
         fontFamily: '-apple-system,BlinkMacSystemFont,Helvetica Neue,Helvetica,Segoe UI,Arial,Roboto,PingFang SC,miui,Hiragino Sans GB,Microsoft Yahei,sans-serif',
         fontStyle: 'bold',
         fill: '#000',
@@ -180,7 +247,7 @@ export default {
           fontSize: 24,
         },
         text2: {
-          fontSize: 18,
+          fontSize: 19,
         },
         fontFamily: '-apple-system,BlinkMacSystemFont,Helvetica Neue,Helvetica,Segoe UI,Arial,Roboto,PingFang SC,miui,Hiragino Sans GB,Microsoft Yahei,sans-serif',
         textGap1: 14
@@ -233,7 +300,7 @@ export default {
       const logoWidth = config.text1.fontSize + config.text2.fontSize + config.textGap1
       const line1 = new Konva.Line({
         points: [padding / 2, padding, padding / 2, padding + logoWidth],
-        stroke: '#d8d8d8',
+        stroke: '#c3c3c3',
         strokeWidth: 1,
       })
 
