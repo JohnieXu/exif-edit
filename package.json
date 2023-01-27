@@ -25,6 +25,7 @@
   "homepage": "https://github.com/johniexu/exif-edit#readme",
   "dependencies": {
     "core-js": "^3.8.3",
+    "dayjs": "^1.11.7",
     "downloadjs": "^1.4.7",
     "konva": "^8.4.0",
     "piexifjs": "^1.0.6",

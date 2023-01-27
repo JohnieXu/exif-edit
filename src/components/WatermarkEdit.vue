@@ -25,6 +25,7 @@ import piexifjs, { piexif } from 'piexifjs'
 import { createBEM } from '@/utils/className'
 import { createObjectURL } from '@/utils/file'
 import Konva from 'konva'
+import dayjs from 'dayjs'
 import * as Constant from '../config/const'
 import { captureException, captureMessage } from '../utils/sentry'
 import { modelToIconPath } from '../utils/icon'
@@ -237,7 +238,7 @@ export default {
         F: 1.8,
         S: 200,
         ISO: 100,
-        T: '2023.01.18 14:00:00'
+        T: dayjs().format('YYYY.MM.DD HH:mm:ss')
       }
       const stage = new Konva.Stage({
         container: this.$refs.container,
@@ -318,10 +319,25 @@ export default {
         padding,
         align: 'left'
       })
+
+      /**
+       * 转换为正确的日期格式
+       * 2023:01:27 12:00:00 转换为 2023.01.27 12:00:00
+       */
+      function tranformT (T) {
+        if (!T) { return T }
+        const y = T.split(' ')[0]
+        const t = T.split(' ')[1]
+        const _y = y.replaceAll(':', '.')
+        return [_y, t].join(' ')
+      }
+
+      const T = tranformT(exif.T)
+      const timeStr = T && dayjs(T).format('YYYY.MM.DD HH:mm:ss') !== 'Invalid Date' ? dayjs(T).format('YYYY.MM.DD HH:mm:ss') : dayjs().format('YYYY.MM.DD HH:mm:ss')
       const text2 = new Konva.Text({
         x: padding,
         y: padding + config.text1.fontSize + config.textGap1,
-        text: exif.T,
+        text: timeStr,
         fontSize: config.text2.fontSize,
         fontFamily: config.fontFamily,
         fill: '#666',
