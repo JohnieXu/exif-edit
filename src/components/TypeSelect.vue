@@ -1,14 +1,14 @@
 <template>
   <div :class="bem()">
     <span :class="bem('button', value === '0' ? 'active' : '')" @click="handleItemClick('0')">Exif编辑</span>
-    <span :class="bem('button', value === '1' ? 'active' : '')" @click="handleItemClick('1')">水印边框</span>
-    <span :class="bem('button', value === '2' ? 'active' : '')" @click="handleItemClick('2')">Demo</span>
+    <span v-if="show.watermark" :class="bem('button', value === '1' ? 'active' : '')" @click="handleItemClick('1')">水印边框</span>
+    <span v-if="show.demo" :class="bem('button', value === '2' ? 'active' : '')" @click="handleItemClick('2')">Demo</span>
   </div>
 </template>
 
 <script>
 import { createBEM } from '@/utils/className';
-
+import { onDevelop } from '@/utils/common';
 
 const bem = createBEM('type-select')
 
@@ -17,6 +17,14 @@ export default {
   model: {
     value: 'selected',
     event: 'change'
+  },
+  data () {
+    return {
+      show: {
+        watermark: true,
+        demo: false
+      }
+    }
   },
   props: {
     value: {
@@ -29,6 +37,11 @@ export default {
     handleItemClick(selected) {
       this.$emit('change', selected)
     }
+  },
+  mounted () {
+    onDevelop(() => {
+      this.show.demo = true
+    })
   }
 }
 </script>

@@ -3,6 +3,16 @@
     <input v-if="!file" ref="file" :class="bem('file')" type="file" name="file" id="file" accept="image/jpeg, image/tiff" @change="handleFileChange" />
     <div ref="container" id="container"></div>
     <div :class="bem('save-container')">
+      <div>
+        <label>质量：</label>
+        <input type="range" v-model.number="exportForm.quality" />
+        <span style="margin-left: 6px; display: inline-block; width: 50px;">{{ (exportForm.quality / 100).toFixed(2) }}</span>
+      </div>
+      <div>
+        <label>文件名：</label>
+        <input type="text" v-model.trim="exportForm.fileName" />
+      </div>
+      <br/>
       <button :class="bem('save')" @click="handleSaveClick">保存</button>
       <button :class="bem('clear')" @click="handleClearClick">清除</button>
     </div>
@@ -15,7 +25,10 @@ import piexifjs, { piexif } from 'piexifjs'
 import { createBEM } from '@/utils/className'
 import { createObjectURL } from '@/utils/file'
 import Konva from 'konva'
+import * as Constant from '../config/const'
 import { captureException, captureMessage } from '../utils/sentry'
+import { modelToIconPath } from '../utils/icon'
+import { onDevelop, removeNull, cloneDeep } from '../utils/common'
 
 /**
  * 画布尺寸设计思路：
@@ -25,6 +38,8 @@ import { captureException, captureMessage } from '../utils/sentry'
  */
 
 const bem = createBEM('wartermark_edit')
+
+const defaultExifVersion = cloneDeep(Constant.DEFUALT_EXIF_VERSION)
 
 /**
  * 从 file 文件获取图片像素大小、图片数据
@@ -75,15 +90,6 @@ const getImageSizeFromSrc = (src) => {
   })
 }
 
-/**
- * 开发环境执行
- */
-const onDevelop = (fn, self, ...args) => {
-  if (process.env.NODE_ENV === 'development') {
-    fn.call(self, ...args)
-  }
-}
-
 // 缩放比例
 const canvasRatio = window.devicePixelRatio || 2
 
@@ -128,6 +134,43 @@ const getImageData = (file) => {
   })
 }
 
+/**
+ * 向 base64 数据中插入 exif 数据
+ * @param {String} b64 base64 数据
+ * @param {Object} exif exif 数据
+ * @param {String} exif.M M
+ * @param {Number} exif.F F
+ * @param {String} exif.S S
+ * @param {String} exif.ISO ISO
+ * @param {String} exif.L L
+ * @param {String} exif.LEN LEN
+ * @param {String} exif.version version
+ */
+const insertExif = (b64, { M, F, S, ISO, L, T, LEN, version } = {}) => {
+  // console.log(b64, M, F, S, ISO, L, T, LEN)
+  const th = {
+    [piexif.ImageIFD.Model]: M
+  }
+  const exif = {
+    [piexif.ExifIFD.ExifVersion]: version || defaultExifVersion,
+    // 光圈值包含小数时需要x100
+    [piexif.ExifIFD.FNumber]: `${F}`.includes('.') ? [F * 100, 1 * 100] : [F, 1],
+    [piexif.ExifIFD.ExposureTime]: [1, Number(S)],
+    [piexif.ExifIFD.ISOSpeed]: Number(ISO),
+    [piexif.ExifIFD.ISOSpeedRatings]: Number(ISO),
+    [piexif.ExifIFD.FocalLength]: [Number(L) * 10, 10],
+    [piexif.ExifIFD.LensModel]: LEN,
+    [piexif.ExifIFD.DateTimeOriginal]: T,
+    [piexif.ExifIFD.DateTimeDigitized]: T,
+  }
+  removeNull(th)
+  removeNull(exif)
+  // console.log(th, exif)
+  const exifStr = piexifjs.dump({ '0th': th, Exif: exif })
+  const nb64 = piexifjs.insert(exifStr, b64)
+  return nb64
+}
+
 export default {
   name: "WatermarkEdit",
   data() {
@@ -145,7 +188,12 @@ export default {
         height: 300
       },
       // konva 的 stage
-      stage: null
+      stage: null,
+      // 导出图片的表单数据
+      exportForm: {
+        quality: 90,
+        fileName: '',
+      }
     }
   },
   methods: {
@@ -155,6 +203,7 @@ export default {
       const file = files[0]
       if (!file) { return }
       this.file = file
+      this.exportForm.fileName = file.name || ''
       // console.log(this.file, files)
       getImageSize(this.file).then(({ imageSize, image }) => {
         this.imageSize = imageSize
@@ -201,7 +250,7 @@ export default {
 
       this.drawImage(layer1)
       this.drawWatermarkBackground(layer1)
-      this.drawCameraData(layer1, { brand: '', model: this.exif.M || 'NIKON Z 5' }, { padding: 40 })
+      this.drawCameraData(layer1, { brand: '', model: this.exif.M || 'XIAOMI 12S ULTRA' }, { padding: 40 })
       this.drawExifData(layer1, exif, { padding: 40 })
     },
     drawImage(layer) {
@@ -307,7 +356,8 @@ export default {
       group.add(line1)
 
       // 绘制品牌 logo
-      const { image } = await getImageSizeFromSrc(require('@/assets/icons/leica.png'))
+      const logoPath = modelToIconPath(exif.M)
+      const { image } = await getImageSizeFromSrc(logoPath)
       const image1 = new Konva.Image({
         image,
         x: -(logoWidth + 0),
@@ -341,8 +391,13 @@ export default {
         window.alert('请先上传照片');
         return;
       }
-      const dataURL = this.stage.toDataURL({ pixelRatio: canvasRatio })
-      downloadURI(dataURL, 'image.jpg')
+      const dataURL = this.stage.toDataURL({
+        mimeType: 'image/jpeg',
+        pixelRatio: canvasRatio,
+        quality: this.exportForm.quality / 100
+      })
+      const nDataURL = insertExif(dataURL, this.exif)
+      downloadURI(nDataURL,  this.exportForm.fileName || 'image.jpg')
     },
     handleClearClick() {
       this.stage.destroy();
