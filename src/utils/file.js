@@ -45,3 +45,64 @@ export const createObjectURL = (file) => {
 export const revokeObjectURL = (url) => {
   return URL.revokeObjectURL(url)
 }
+
+/**
+ * 从 file 文件获取图片像素大小、图片数据
+ * @param {File} file 文件对象
+ */
+export const getImageSize = (file) => {
+  return new Promise((resolve, reject) => {
+    const image = new Image()
+    const [imageUrl, revoke] = createObjectURL(file)
+    image.src = imageUrl
+    image.onload = () => {
+      revoke()
+      resolve({
+        imageSize: {
+          width: image.width,
+          height: image.height,
+        },
+        image
+      })
+    }
+    image.onerror = (e) => {
+      revoke()
+      reject(e)
+    }
+  })
+}
+
+/**
+ * 读取 file 文件为 ArrayBuffer 对象
+ * @param {File} file 文件对象
+ */
+export const readFile2Buffer = (file) => {
+  return new Promise((resolve, reject) => {
+    const fileReader = new FileReader()
+    fileReader.onload = (e) => {
+      resolve(e.target.result)
+    }
+    fileReader.onerror = (e) => {
+      reject(e)
+    }
+    fileReader.readAsArrayBuffer(file)
+  })
+}
+
+/**
+ * 读取 file 文件为 dataURL 字符串
+ * @param {File} file 文件对象
+ * @returns 文件的 dataURL
+ */
+export const getImageData = (file) => {
+  return new Promise((resolve, reject) => {
+    const fileReader = new FileReader()
+    fileReader.onload = (e) => {
+      resolve(e.target.result)
+    }
+    fileReader.onerror = (error) => {
+      reject(error)
+    }
+    fileReader.readAsDataURL(file)
+  })
+}

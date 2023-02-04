@@ -22,14 +22,14 @@
 <script>
 /* eslint-disable no-unused-vars */
 import piexifjs, { piexif } from 'piexifjs'
-import { createBEM } from '@/utils/className'
-import { createObjectURL } from '@/utils/file'
 import Konva from 'konva'
 import dayjs from 'dayjs'
-import * as Constant from '../config/const'
-import { captureException, captureMessage } from '../utils/sentry'
-import { modelToIconPath } from '../utils/icon'
-import { onDevelop, removeNull, cloneDeep } from '../utils/common'
+import * as Constant from '@/config/const'
+import { createBEM } from '@/utils/className'
+import { captureException, captureMessage } from '@/utils/sentry'
+import { modelToIconPath } from '@/utils/icon'
+import { onDevelop, removeNull, cloneDeep } from '@/utils/common'
+import { getImageSize, readFile2Buffer, getImageData } from '@/utils/file'
 
 /**
  * 画布尺寸设计思路：
@@ -41,32 +41,6 @@ import { onDevelop, removeNull, cloneDeep } from '../utils/common'
 const bem = createBEM('wartermark_edit')
 
 const defaultExifVersion = cloneDeep(Constant.DEFUALT_EXIF_VERSION)
-
-/**
- * 从 file 文件获取图片像素大小、图片数据
- * @param {File} file 文件对象
- */
-const getImageSize = (file) => {
-  return new Promise((resolve, reject) => {
-    const image = new Image()
-    const [imageUrl, revoke] = createObjectURL(file)
-    image.src = imageUrl
-    image.onload = () => {
-      revoke()
-      resolve({
-        imageSize: {
-          width: image.width,
-          height: image.height,
-        },
-        image
-      })
-    }
-    image.onerror = (e) => {
-      revoke()
-      reject(e)
-    }
-  })
-}
 
 /**
  * 从图片链接或 dataURI 获取图片像素大小、图片数据
@@ -119,20 +93,6 @@ const parseExifData = (exifData) => {
     LEN: LEN || null,
     T: T || null
   }
-}
-
-// eslint-disable-next-line no-unused-vars
-const getImageData = (file) => {
-  return new Promise((resolve, reject) => {
-    const fileReader = new FileReader()
-    fileReader.onload = (e) => {
-      resolve(e.target.result)
-    }
-    fileReader.onerror = (error) => {
-      reject(error)
-    }
-    fileReader.readAsDataURL(file)
-  })
 }
 
 /**
@@ -205,6 +165,12 @@ export default {
       if (!file) { return }
       this.file = file
       this.exportForm.fileName = file.name || ''
+      readFile2Buffer(this.file).then((ab) => {
+        const ab8 = new Uint8Array(ab)
+        console.log(ab, ab8)
+      }).catch((e) => {
+        console.error(e)
+      })
       // console.log(this.file, files)
       getImageSize(this.file).then(({ imageSize, image }) => {
         this.imageSize = imageSize
