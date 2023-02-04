@@ -438,10 +438,11 @@ export default {
 }
 .pe_exif-edit__preview {
   flex: 1;
-  padding: 0 20px;
+  padding: 20px 20px;
   text-align: center;
   align-self: center;
   align-items: center;
+  font-size: 0;
 }
 .pe_exif-edit__preview-image {
   width: 100%;
