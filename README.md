@@ -1,13 +1,17 @@
 # exif-edit
 
-一款基于 vue 的图片 exif 数据编辑器组件。
+基于 vue 的图片 exif 元数据编辑、水印边框合成工具应用。
 
-An exif data edtior component with javascript(based on vue).
+主要功能：
+
+- exif 元数据读写
+- 水印边框合成
+- 图片排版合成
 
 预览地址：https://exif-edit.vercel.app/
 
 <p align="center">
-  <img src="./docs/imgs/7.jpg" alt="7.jpg" width="400" />
+  <img src="./docs/imgs/8.jpg" alt="8.jpg" width="400" />
 </p>
 
 ## 安装依赖
