@@ -36,6 +36,11 @@ import { getImageSize, readFile2Buffer, getImageData } from '@/utils/file'
  * 1.获取选择的图片像素大小，在 y 轴（高度方向）加上水印高度
  * 2.将上面得到的像素大小除以缩放比例 canvasRatio 后作文画布大小（目的：防止图片像素太大将画布撑得太大）
  * 3.导出图片时在传入 canvasRatio 参数，放大为原图像素大小（目的：保证导出图片像素与原图符合）
+ * 
+ * 绘图像素与场景现实像素缩放思路：
+ * 1.绘图像素以选择的图片真实像素绘制
+ * 2.使用 css 样式讲场景中的 div 和 canvas 元素的 style 的宽高按照缩放进行展示
+ * 3.场景展示像素约定：竖版图固定宽度 800px、横版图固定高度 400px
  */
 
 const bem = createBEM('wartermark_edit')
@@ -66,7 +71,7 @@ const getImageSizeFromSrc = (src) => {
 }
 
 // 缩放比例
-const canvasRatio = window.devicePixelRatio || 2
+const canvasRatio = window.devicePixelRatio || 1
 
 const getExifData = (imgData) => {
   // eslint-disable-next-line
@@ -144,6 +149,11 @@ export default {
         width: 0,
         height: 0
       },
+      // 界面场景像素大小
+      sceneSize: {
+        width: 0,
+        height: 0
+      },
       // 水印相关配置
       watermark: {
         height: 300
@@ -175,6 +185,11 @@ export default {
       getImageSize(this.file).then(({ imageSize, image }) => {
         this.imageSize = imageSize
         this.image = image
+        const width = 800;
+        this.sceneSize = {
+          width,
+          height: width / imageSize.width * (imageSize.height + this.watermark.height)
+        }
       }).then(() => {
         return getImageData(file).then((imgData) => {
           const exifData = getExifData(imgData)
@@ -195,7 +210,10 @@ export default {
           // this.toggleLoading(false)
           // clearFileValue()
         })
-      }).then(this.initStage)
+      }).then(() => {
+        this.initStage()
+        this.initScene()
+      })
     },
     initStage() {
       // TODO: 需要判断 exif 为非空对象
@@ -212,6 +230,8 @@ export default {
         height: (this.imageSize.height + this.watermark.height) / canvasRatio
       })
       const layer1 = new Konva.Layer()
+      // console.log(layer1.getCanvas().getPixelRatio(), layer1.getCanvas().setPixelRatio(4))
+      // console.log(layer1.getCanvas().pixelRatio())
       stage.add(layer1)
       this.stage = stage
 
@@ -219,6 +239,17 @@ export default {
       this.drawWatermarkBackground(layer1)
       this.drawCameraData(layer1, { brand: '', model: this.exif.M || 'XIAOMI 12S ULTRA' }, { padding: 40 })
       this.drawExifData(layer1, exif, { padding: 40 })
+    },
+    initScene() {
+      const sceneSize = this.sceneSize
+      const content = document.querySelector('#container .konvajs-content')
+      const canvas = document.querySelector('#container canvas')
+      if (content && canvas) {
+        content.style.width = `${sceneSize.width}px`
+        content.style.height = `${sceneSize.height}px`
+        canvas.style.width = `${sceneSize.width}px`
+        canvas.style.height = `${sceneSize.height}px`
+      }
     },
     drawImage(layer) {
       const image = new Konva.Image({
@@ -373,6 +404,8 @@ export default {
         window.alert('请先上传照片');
         return;
       }
+      // eslint-disable-next-line
+      // debugger
       const dataURL = this.stage.toDataURL({
         mimeType: 'image/jpeg',
         pixelRatio: canvasRatio,
@@ -390,6 +423,10 @@ export default {
         width: 0,
         height: 0
       };
+      this.exportForm = {
+        quality: 90,
+        fileName: '',
+      }
     }
   }
 }
@@ -405,5 +442,11 @@ export default {
 }
 .pe_wartermark_edit__clear {
   cursor: pointer;
+}
+</style>
+
+<style>
+#container .konvajs-content {
+  margin: 0 auto;
 }
 </style>
