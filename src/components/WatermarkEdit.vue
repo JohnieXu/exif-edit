@@ -73,6 +73,39 @@ const getImageSizeFromSrc = (src) => {
 // 缩放比例
 const canvasRatio = window.devicePixelRatio || 1
 
+// 图片像素大小边界情况
+const imageSizeLimited = {
+  wmin: 1500,
+  hmin: 2000,
+  hmax: 3500
+}
+
+/**
+ * 校验图片像素大小
+ * @param {Object} imageSize 图片尺寸
+ * @param {Number} imageSize.width 宽度
+ * @param {Number} imageSize.height 高度
+ * @return {Object} { valid: Boolean, message: String }
+ */
+const imageSizeValid = (imageSize) => {
+  if (imageSize.width < imageSizeLimited.wmin || imageSize.height < imageSizeLimited.hmin) {
+    return {
+      valid: false,
+      message: '图片尺寸太小，合成效果可能不佳'
+    }
+  }
+  if (imageSize.height >= imageSizeLimited.hmax) {
+    return {
+      valid: false,
+      message: '图片尺寸太大，合成效果可能不佳'
+    }
+  }
+  return {
+    valid: true,
+    message: null
+  }
+}
+
 const getExifData = (imgData) => {
   // eslint-disable-next-line
   // debugger
@@ -183,8 +216,16 @@ export default {
       })
       // console.log(this.file, files)
       getImageSize(this.file).then(({ imageSize, image }) => {
+
+        // 校验图片尺寸大小（仅做提示不阻断后续合成）
+        const { valid, message } = imageSizeValid(imageSize)
+        if (!valid) {
+          alert(message)
+        }
+        
         this.imageSize = imageSize
         this.image = image
+        
         const width = 800;
         this.sceneSize = {
           width,
