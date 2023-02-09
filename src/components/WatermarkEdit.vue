@@ -237,9 +237,12 @@ export default {
           console.log(exifData)
           const exif = parseExifData(exifData)
           console.log(exif)
-          // this.showNoExifToast(exif)
           // exif.version = exif.version || defaultExifVersion
-          this.exif = exif
+          if (this.isInValidExif(exif) ) {
+            this.exif = null
+          } else {
+            this.exif = exif
+          }
         }).catch((e) => {
           console.error(e)
           captureException(e)
@@ -257,7 +260,6 @@ export default {
       })
     },
     initStage() {
-      // TODO: 需要判断 exif 为非空对象
       const exif = this.exif || {
         L: 50,
         F: 1.8,
@@ -278,8 +280,8 @@ export default {
 
       this.drawImage(layer1)
       this.drawWatermarkBackground(layer1)
-      this.drawCameraData(layer1, { brand: '', model: this.exif.M || 'XIAOMI 12S ULTRA' }, { padding: 40 })
-      this.drawExifData(layer1, exif, { padding: 40 })
+      this.drawCameraData(layer1, { brand: '', model: (this.exif || {}).M || 'XIAOMI 12S ULTRA' }, { padding: 40 })
+      this.drawExifData(layer1, exif || {}, { padding: 40 })
     },
     initScene() {
       const sceneSize = this.sceneSize
@@ -431,6 +433,12 @@ export default {
 
       layer.add(group)
     },
+    isInValidExif (exif) {
+      const _exif = cloneDeep(exif)
+      removeNull(_exif)
+      const noExif = !Object.keys(_exif).length
+      return noExif
+    },
     handleSaveClick() {
       function downloadURI(uri, name) {
         let link = document.createElement('a');
@@ -445,14 +453,12 @@ export default {
         window.alert('请先上传照片');
         return;
       }
-      // eslint-disable-next-line
-      // debugger
       const dataURL = this.stage.toDataURL({
         mimeType: 'image/jpeg',
         pixelRatio: canvasRatio,
         quality: this.exportForm.quality / 100
       })
-      const nDataURL = insertExif(dataURL, this.exif)
+      const nDataURL = this.exif ? insertExif(dataURL, this.exif) : dataURL
       downloadURI(nDataURL,  this.exportForm.fileName || 'image.jpg')
     },
     handleClearClick() {
