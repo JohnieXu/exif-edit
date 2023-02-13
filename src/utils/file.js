@@ -73,6 +73,29 @@ export const getImageSize = (file) => {
 }
 
 /**
+ * 获取 Base64 字符串对应的字节数（有 1、2 字节的误差）
+ * https://stackoverflow.com/questions/29939635/how-to-get-file-size-of-newly-created-image-if-src-is-base64-string
+ * @param {String} b64 Base64 字符串
+ * @returns Number 字节数
+ */
+export const getBase64ByteSize = (b64) => {
+  if (!b64) {
+    return 0
+  }
+  return Math.ceil(b64.length * 3 / 4)
+}
+
+/**
+ * 字节转换为 Mb
+ * @param {Number} n 字节数
+ * @param {Number} precision 小数位（精度）
+ * @returns Mb 单位的大小
+ */
+export const byte2Mb = (n, precision = 2) => {
+  return (n / 1000 / 1000).toFixed(precision) + 'Mb'
+}
+
+/**
  * 读取 file 文件为 ArrayBuffer 对象
  * @param {File} file 文件对象
  */

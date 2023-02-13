@@ -5,7 +5,7 @@
     <div :class="bem('save-container')">
       <div>
         <label>质量：</label>
-        <input type="range" v-model.number="exportForm.quality" />
+        <input type="range" v-model.number="exportForm.quality" @change="handleQualityChange" />
         <span style="margin-left: 6px; display: inline-block; width: 50px;">{{ (exportForm.quality / 100).toFixed(2) }}</span>
       </div>
       <div>
@@ -13,7 +13,7 @@
         <input type="text" v-model.trim="exportForm.fileName" />
       </div>
       <br/>
-      <button :class="bem('save')" @click="handleSaveClick">保存</button>
+      <button :class="bem('save')" @click="handleSaveClick">保存{{ fileSize ? `(${fileSize})` : ''}}</button>
       <button :class="bem('clear')" @click="handleClearClick">清除</button>
     </div>
   </div>
@@ -29,7 +29,7 @@ import { createBEM } from '@/utils/className'
 import { captureException, captureMessage } from '@/utils/sentry'
 import { modelToIconPath } from '@/utils/icon'
 import { onDevelop, removeNull, cloneDeep } from '@/utils/common'
-import { getImageSize, readFile2Buffer, getImageData } from '@/utils/file'
+import { getImageSize, readFile2Buffer, getImageData, getBase64ByteSize, byte2Mb } from '@/utils/file'
 
 /**
  * 画布尺寸设计思路：
@@ -197,7 +197,9 @@ export default {
       exportForm: {
         quality: 90,
         fileName: '',
-      }
+      },
+      // 导出的文件大小
+      fileSize: '',
     }
   },
   methods: {
@@ -282,6 +284,7 @@ export default {
       this.drawWatermarkBackground(layer1)
       this.drawCameraData(layer1, { brand: '', model: (this.exif || {}).M || 'XIAOMI 12S ULTRA' }, { padding: 40 })
       this.drawExifData(layer1, exif || {}, { padding: 40 })
+      this.calcExportFileSize()
     },
     initScene() {
       const sceneSize = this.sceneSize
@@ -439,6 +442,23 @@ export default {
       const noExif = !Object.keys(_exif).length
       return noExif
     },
+    calcExportFileSize () {
+      if (!this.stage) {
+        this.fileSize = '';
+        return
+      }
+      const dataURL = this.stage.toDataURL({
+        mimeType: 'image/jpeg',
+        pixelRatio: canvasRatio,
+        quality: this.exportForm.quality / 100
+      });
+      const nDataURL = this.exif ? insertExif(dataURL, this.exif) : dataURL;
+      const fileSize = byte2Mb(getBase64ByteSize(nDataURL), 2);
+      this.fileSize = fileSize;
+    },
+    handleQualityChange() {
+      this.calcExportFileSize();
+    },
     handleSaveClick() {
       function downloadURI(uri, name) {
         let link = document.createElement('a');
@@ -458,8 +478,10 @@ export default {
         pixelRatio: canvasRatio,
         quality: this.exportForm.quality / 100
       })
-      const nDataURL = this.exif ? insertExif(dataURL, this.exif) : dataURL
-      downloadURI(nDataURL,  this.exportForm.fileName || 'image.jpg')
+      const nDataURL = this.exif ? insertExif(dataURL, this.exif) : dataURL;
+      // const fileSize = byte2Mb(getBase64ByteSize(nDataURL), 3);
+      // console.log('fileSize = ', fileSize);
+      downloadURI(nDataURL,  this.exportForm.fileName || 'image.jpg');
     },
     handleClearClick() {
       this.stage.destroy();
@@ -473,7 +495,8 @@ export default {
       this.exportForm = {
         quality: 90,
         fileName: '',
-      }
+      };
+      this.calcExportFileSize();
     }
   }
 }
