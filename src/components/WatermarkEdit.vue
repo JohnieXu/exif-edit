@@ -1,20 +1,63 @@
 <template>
   <div :class="bem()">
-    <input v-if="!file" ref="file" :class="bem('file')" type="file" name="file" id="file" accept="image/jpeg, image/tiff" @change="handleFileChange" />
-    <div ref="container" id="container"></div>
+    <!-- 预览区 -->
+    <div :class="bem('left-container')" :style="{ flexBasis: previewWidth + 'px' }">
+      <div v-if="!file" :class="bem('preview-image', 'placeholder')">
+        <div :class="bem('preview-image-icon')">
+          <div v-html="imagePlaceholder"></div>
+          <input ref="file" :class="bem('file')" type="file" name="file" id="file" accept="image/jpeg, image/tiff" @change="handleFileChange" />
+        </div>
+      </div>
+      <!-- <input v-if="!file" ref="file" :class="bem('file')" type="file" name="file" id="file" accept="image/jpeg, image/tiff" @change="handleFileChange" /> -->
+      <div ref="container" id="container" :class="bem('preivew-container')"></div>
+    </div>
+    <!-- 参数区 -->
     <div :class="bem('save-container')">
-      <div>
-        <label>质量：</label>
-        <input type="range" v-model.number="exportForm.quality" @change="handleQualityChange" />
-        <span style="margin-left: 6px; display: inline-block; width: 50px;">{{ (exportForm.quality / 100).toFixed(2) }}</span>
+      <div class="top">
+        <div class="group">
+          <p class="title">水印设置</p>
+          <div class="field">
+            <label>型号</label>
+            <input class="value" />
+          </div>
+          <div class="field">
+            <label>图标</label>
+            <select class="value">
+              <option>a</option>
+            </select>
+            <img class="icon" :src="require('@/assets/imgs/arrow_right.png')" />
+          </div>
+          <div class="field">
+            <label>主题</label>
+            <select class="value">
+              <option>浅色</option>
+              <option>深色</option>
+            </select>
+            <img class="icon" :src="require('@/assets/imgs/arrow_right.png')" />
+          </div>
+        </div>
+        <div class="group group-2">
+          <p class="title">导出设置</p>
+          <div class="field">
+            <label>质量</label>
+            <input class="value value__range" type="range" v-model.number="exportForm.quality" @change="handleQualityChange" />
+            <span style="margin-left: 6px; display: inline-block; width: 30px; text-align: right; font-size: 14px; color: rgba(189, 189, 189, 1);">{{ (exportForm.quality / 100).toFixed(2) }}</span>
+          </div>
+          <div class="field">
+            <label>文件名</label>
+            <input class="value" type="text" v-model.trim="exportForm.fileName" />
+          </div>
+          <br/>
+        </div>
       </div>
-      <div>
-        <label>文件名：</label>
-        <input type="text" v-model.trim="exportForm.fileName" />
+      <div class="bottom">
+        <div class="group group-3">
+          <div class="actions">
+            <button class="button button__save" @click="handleSaveClick">下载图片{{ fileSize ? `(${fileSize})` : ''}}</button>
+            <button class="button button__clear" @click="handleClearClick">清空</button>
+          </div>
+        </div>
       </div>
-      <br/>
-      <button :class="bem('save')" @click="handleSaveClick">保存{{ fileSize ? `(${fileSize})` : ''}}</button>
-      <button :class="bem('clear')" @click="handleClearClick">清除</button>
     </div>
   </div>
 </template>
@@ -30,6 +73,7 @@ import { captureException, captureMessage } from '@/utils/sentry'
 import { modelToIconPath } from '@/utils/icon'
 import { onDevelop, removeNull, cloneDeep } from '@/utils/common'
 import { getImageSize, readFile2Buffer, getImageData, getBase64ByteSize, byte2Mb } from '@/utils/file'
+import { imagePlaceholder } from '@/components/data'
 
 /**
  * 画布尺寸设计思路：
@@ -40,12 +84,14 @@ import { getImageSize, readFile2Buffer, getImageData, getBase64ByteSize, byte2Mb
  * 绘图像素与场景现实像素缩放思路：
  * 1.绘图像素以选择的图片真实像素绘制
  * 2.使用 css 样式讲场景中的 div 和 canvas 元素的 style 的宽高按照缩放进行展示
- * 3.场景展示像素约定：竖版图固定宽度 800px、横版图固定高度 400px
+ * 3.场景展示像素约定：竖版图固定宽度 400px、横版图固定高度 200px
  */
 
 const bem = createBEM('wartermark_edit')
 
 const defaultExifVersion = cloneDeep(Constant.DEFUALT_EXIF_VERSION)
+
+const previewWidth = 400 // 左侧预览图宽度版图固定宽度 400px、横版图固定高度 200px
 
 /**
  * 从图片链接或 dataURI 获取图片像素大小、图片数据
@@ -174,6 +220,8 @@ export default {
   name: "WatermarkEdit",
   data() {
     return {
+      imagePlaceholder,
+      previewWidth,
       file: null,
       image: null,
       exif: null,
@@ -228,7 +276,7 @@ export default {
         this.imageSize = imageSize
         this.image = image
         
-        const width = 800;
+        const width = previewWidth;
         this.sceneSize = {
           width,
           height: width / imageSize.width * (imageSize.height + this.watermark.height)
@@ -502,9 +550,147 @@ export default {
 }
 </script>
 
-<style scoped>
+<style>
+#container .konvajs-content {
+  /* box-shadow: 6px 5px 5px rgb(200 200 200 / 30%); */
+  box-shadow: 0 0 10px rgb(200 200 200 / 30%);
+}
+.pe_wartermark_edit {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  /* align-items: center; */
+  /* align-items: flex-end; */
+  align-items: stretch;
+  border: 1px dashed rgba(200,200,200,0.2);
+  padding: 10px;
+  border-radius: 8px;
+}
+.pe_wartermark_edit__preview-image-icon {
+  position: relative;
+  display: inline-block;
+}
+.pe_wartermark_edit__preview-image-icon .icon {
+  width: 132px;
+  height: auto;
+  transition: width 0.2s ease-in-out;
+}
+.pe_wartermark_edit__preview-image-icon:hover .icon {
+  width: 140px;
+}
+.pe_wartermark_edit__preview-image-icon .pe_wartermark_edit__file {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  opacity: 0;
+  cursor: pointer;
+}
+.pe_wartermark_edit__left-container {
+  flex: 2;
+  align-self: center;
+}
 .pe_wartermark_edit__save-container {
-  margin-top: 50px;
+  flex: 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: stretch;
+}
+.pe_wartermark_edit__save-container .group {
+  text-align: left;
+}
+.pe_wartermark_edit__save-container .group-2 {
+  margin-top: 47px;
+}
+.pe_wartermark_edit__save-container .group .title {
+  color: #BDBDBD;
+  font-family: Inter;
+  font-weight: medium;
+  font-size: 12px;
+  line-height: normal;
+  letter-spacing: 0px;
+  text-align: left;
+}
+.pe_wartermark_edit__save-container .group .field {
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 0.5px solid #E0E0E0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.pe_wartermark_edit__save-container .group .field .value {
+  color: rgba(189, 189, 189, 1);
+  font-weight: 500;
+  font-size: 14px;
+  border: none;
+  flex: 1;
+  text-align: right;
+  appearance: none;
+}
+.pe_wartermark_edit__save-container .group .field .value__range {
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  appearance: none;
+  height: 3px;
+  border-radius: 10px;
+  background: rgba(251, 171, 126, 1);
+}
+.pe_wartermark_edit__save-container .group .field .value__range::-webkit-slider-thumb {
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(251, 171, 126, 1);
+}
+.pe_wartermark_edit__save-container .group .field .value:focus {
+  outline: none;
+  border: none;
+}
+.pe_wartermark_edit__save-container .group .field .value:focus-visible {
+  outline: none;
+  border: none;
+}
+.pe_wartermark_edit__save-container .group .field .icon {
+  width: 7px;
+  height: 12px;
+  margin-left: 6px;
+}
+.pe_wartermark_edit__save-container .group .field label {
+  color: #2C3E50;
+  font-family: Inter;
+  font-weight: medium;
+  font-size: 14px;
+  line-height: normal;
+  letter-spacing: 0px;
+  text-align: left;
+  display: inline-block;
+  width: 50px;
+}
+.pe_wartermark_edit__save-container .group .actions .button {
+  display: inline-block;
+  padding: 10px 30px;
+  margin-right: 8px;
+  margin-bottom: 8px;
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 1px 5px 10px rgba(7, 163, 255, 0.25);
+  color: rgba(44, 62, 80, 1);
+  font-weight: 500;
+  font-size: 12px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease-in-out;
+}
+.pe_wartermark_edit__save-container .group .actions .button:hover {
+  box-shadow: 2px 5px 10px rgb(7 163 255 / 31%);
 }
 .pe_wartermark_edit__save {
   cursor: pointer;
