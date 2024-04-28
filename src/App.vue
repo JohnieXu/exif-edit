@@ -4,6 +4,7 @@
     <ExifEdit v-show="type == 0" @change="handleExifEditChange" />
     <WatermarkEdit v-show="type == 1" />
     <VDemo v-show="type == 2"/>
+    <SDParameters v-show="type == 3"/>
     <EIconTest v-if="isEIconTestShow" />
   </div>
 </template>
@@ -15,6 +16,7 @@ import EIconTest from './components/EIconTest.vue';
 import TypeSelect from './components/TypeSelect.vue'
 import WatermarkEdit from './components/WatermarkEdit.vue'
 import VDemo from './components/Demo.vue'
+import SDParameters from './components/SDParameters.vue'
 
 export default {
   name: 'App',
@@ -23,7 +25,8 @@ export default {
     EIconTest,
     TypeSelect,
     WatermarkEdit,
-    VDemo
+    VDemo,
+    SDParameters
   },
   data () {
     return {
