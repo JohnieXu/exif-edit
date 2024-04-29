@@ -1,39 +1,42 @@
 <template>
-  <div :class="bem()">
-    <!-- 图片预览 -->
-    <div :class="bem('preview')">
-      <img v-if="previewImageData" :class="bem('preview-image')" :src="previewImageUrl" alt="img" />
-      <div v-else :class="bem('preview-image', 'placeholder')">
-        <div :class="bem('preview-image-icon')">
-          <div v-html="imagePlaceholder"></div>
-          <input
-            ref="file"
-            :class="bem('file')"
-            type="file"
-            name="file"
-            id="file_sd-parameters"
-            accept="image/png"
-            @change="handleFileChange" />
+  <FileDragger @file="handleDragDone">
+    <div :class="bem()">
+      <!-- 图片预览 -->
+      <div :class="bem('preview')">
+        <img v-if="previewImageData" :class="bem('preview-image')" :src="previewImageUrl" alt="img" />
+        <div v-else :class="bem('preview-image', 'placeholder')">
+          <div :class="bem('preview-image-icon')">
+            <div v-html="imagePlaceholder"></div>
+            <input
+              ref="file"
+              :class="bem('file')"
+              type="file"
+              name="file"
+              id="file_sd-parameters"
+              accept="image/png"
+              @change="handleFileChange" />
+          </div>
+        </div>
+      </div>
+      <!-- 参数编辑 -->
+      <div :class="bem('property')">
+        <div :class="bem('result')">
+          <p v-if="parameters">{{ parameters }}</p>
+          <p v-else class="placeholder">点击左侧图标选择png格式图片，或者拖拽图片到此处，会自动解析图片中包含的Stable-Diffusion生成信息</p>
+        </div>
+        <div v-if="parameters" :class="bem('actions')">
+          <button :class="bem('actions-button', 'clear')" @click="handleClearClick">
+            <EIcon :class="bem('actions-button-icon')" name="clear"></EIcon>
+            <span :class="bem('actions-button-text')">清空</span>
+          </button>
+          <button :class="bem('actions-button', 'copy')" @click="handleCopyClick">
+            <EIcon :class="bem('actions-button-icon')" name="copy"></EIcon>
+            <span :class="bem('actions-button-text')">复制</span>
+          </button>
         </div>
       </div>
     </div>
-    <!-- 参数编辑 -->
-    <div :class="bem('property')">
-      <div :class="bem('result')">
-        <p>{{ parameters }}</p>
-      </div>
-      <div v-if="parameters" :class="bem('actions')">
-        <button :class="bem('actions-button', 'clear')" @click="handleClearClick">
-          <EIcon :class="bem('actions-button-icon')" name="clear"></EIcon>
-          <span :class="bem('actions-button-text')">清空</span>
-        </button>
-        <button :class="bem('actions-button', 'copy')" @click="handleCopyClick">
-          <EIcon :class="bem('actions-button-icon')" name="copy"></EIcon>
-          <span :class="bem('actions-button-text')">复制</span>
-        </button>
-      </div>
-    </div>
-  </div>
+  </FileDragger>
 </template>
 
 <script>
@@ -42,6 +45,7 @@ import { createBEM } from '../utils/className'
 import { createObjectURL, revokeObjectURL } from '../utils/file'
 import { captureException, captureMessage } from '../utils/sentry'
 import EIcon from './EIcon.vue'
+import FileDragger from './FileDragger.vue'
 
 const imagePlaceholder = '<svg t="1668863586543" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2945" width="128" height="128"><path d="M856.32 428.064c-94.816 0-144.928 90.656-185.184 163.52-25.824 46.688-52.512 94.944-78.72 97.568-28.544-5.664-48.096-23.2-70.656-43.36-31.744-28.448-67.488-60.288-130.464-57.952-76.8 3.328-146.24 57.696-206.4 161.696a32 32 0 0 0 55.392 32.064c48.48-83.84 100.224-127.488 153.728-129.824 36.928-1.44 56.96 16.576 84.992 41.664 26.88 24.096 57.344 51.36 105.888 59.392a31.584 31.584 0 0 0 5.216 0.448c64.704 0 101.44-66.464 136.96-130.72 28.352-51.328 57.504-104 97.184-123.072v369.984H128V231.68h488.16a32 32 0 1 0 0-64H96a32 32 0 0 0-32 32v701.824a32 32 0 0 0 32 32h760.32a32 32 0 0 0 32-32V460.064a32 32 0 0 0-32-32z" p-id="2946" fill="#faf9f9"></path><path d="M180.96 424.32c0 57.952 47.168 105.12 105.12 105.12s105.12-47.168 105.12-105.12-47.168-105.088-105.12-105.088-105.12 47.136-105.12 105.088z m146.24 0a41.152 41.152 0 0 1-82.24 0 41.152 41.152 0 0 1 82.24 0zM960 174.656h-61.376V113.28a32 32 0 1 0-64 0v61.344H752.64a32 32 0 1 0 0 64h81.984v81.984a32 32 0 1 0 64 0V238.656H960a32 32 0 1 0 0-64z" p-id="2947" fill="#faf9f9"></path></svg>'
 
@@ -128,6 +132,7 @@ export default {
   name: 'SDParameters',
   components: {
     EIcon,
+    FileDragger,
   },
   props: {
     // png 图片的 base64 数据 TODO: 支持外部传入 base64需要转为ArrayBuffer
@@ -159,10 +164,33 @@ export default {
       this.fileReader.loading = loading
     },
     showParseError (e) {
-      window.alert(`解析SD生成信息失败：${e}`)
+      let message = `解析SD生成信息失败：${e}`
+      if (e.message.includes('bad signature')) {
+        message = `请选择png格式图片，文件后缀是.png`
+      }
+      window.alert(message)
     },
     showNoParametersToast () {
-      window.alert('当前图未解析到SD生成信息')
+      window.alert('当前图片未解析到SD生成信息')
+    },
+    /**
+     * 
+     * @param {File} file 拖拽的文件
+     */
+    handleDragDone (file) {
+      const getExtension = (str) => {
+        const arr = str.split('.')
+        if (arr.length < 2) {
+          return
+        }
+        return arr[arr.length - 1]
+      }
+      const extension = getExtension(file.name)
+      if (!extension || extension !== 'png') {
+        window.showParseError('请选择png格式图片，文件后缀是.png')
+        return
+      }
+      this.processFile(file)
     },
     handleClearClick () {
       this.imgBuffer = null
@@ -189,7 +217,9 @@ export default {
       const files = e.target.files || []
       const file = files[0]
       if (!file || this.fileReader.loading) { return }
-
+      this.processFile(file)
+    },
+    processFile (file) {
       const clearFileValue = () => {
         if (this.$refs.file) {
           this.$refs.file.value = ''
@@ -197,7 +227,7 @@ export default {
       }
 
       this.toggleLoading(true)
-      getImageBuffer(file).then(async (buffer) => {
+      return getImageBuffer(file).then(async (buffer) => {
         let parameters = null
         try {
           const parsed = await getSDParameters(buffer)
@@ -268,14 +298,22 @@ export default {
   padding-right: 20px;
 }
 .pe_sd-parameters__result {
-  flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
   padding-left: 20px;
   padding-right: 20px;
+  padding-top: 20px;
+  padding-bottom: 20px;
   text-align: left;
-  min-height: 30vh;
+  min-height: 50vh;
+  p {
+    margin: 0;
+    padding: 0;
+  }
+}
+.pe_sd-parameters__result .placeholder {
+  color: rgb(248 250 252);
 }
 .pe_sd-parameters__row {
   display: flex;
@@ -303,13 +341,13 @@ export default {
   border-color: #07A3FF;
 }
 .pe_sd-parameters__actions {
-  /* margin-top: 16px; */
+  margin-bottom: 20px;
 }
 .pe_sd-parameters__actions-button {
   cursor: pointer;
   padding: 6px 20px;
   margin-right: 8px;
-  margin-top: 12px;
+  margin-top: 0px;
   border: none;
   border-radius: 20px;
   background-color: #fff;
