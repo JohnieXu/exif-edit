@@ -178,7 +178,11 @@ export default {
      * @param {File} file 拖拽的文件
      */
     handleDragDone (file) {
+      console.log(file)
       const getExtension = (str) => {
+        if (!str) {
+          return
+        }
         const arr = str.split('.')
         if (arr.length < 2) {
           return
@@ -187,7 +191,7 @@ export default {
       }
       const extension = getExtension(file.name)
       if (!extension || extension !== 'png') {
-        this.showParseError('请选择png格式图片，文件后缀是.png')
+        this.showParseError(new Error('bad signature'))
         return
       }
       this.processFile(file)
