@@ -187,7 +187,7 @@ export default {
       }
       const extension = getExtension(file.name)
       if (!extension || extension !== 'png') {
-        window.showParseError('请选择png格式图片，文件后缀是.png')
+        this.showParseError('请选择png格式图片，文件后缀是.png')
         return
       }
       this.processFile(file)
