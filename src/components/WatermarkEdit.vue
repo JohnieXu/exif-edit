@@ -18,20 +18,20 @@
           <p class="title">水印设置</p>
           <div class="field">
             <label>型号</label>
-            <input class="value" />
+            <input class="value" v-model="watermarkFormData.model" />
           </div>
           <div class="field">
             <label>图标</label>
-            <select class="value">
-              <option>a</option>
+            <select class="value" v-model="watermarkFormData.logo">
+              <option value="a">a</option>
             </select>
             <img class="icon" :src="require('@/assets/imgs/arrow_right.png')" />
           </div>
           <div class="field">
             <label>主题</label>
-            <select class="value">
-              <option>浅色</option>
-              <option>深色</option>
+            <select class="value" v-model="watermarkFormData.theme">
+              <option :value="watermarkTheme.light">浅色</option>
+              <option :value="watermarkTheme.dark">深色</option>
             </select>
             <img class="icon" :src="require('@/assets/imgs/arrow_right.png')" />
           </div>
@@ -40,12 +40,12 @@
           <p class="title">导出设置</p>
           <div class="field">
             <label>质量</label>
-            <input class="value value__range" type="range" v-model.number="exportForm.quality" @change="handleQualityChange" />
-            <span style="margin-left: 6px; display: inline-block; width: 30px; text-align: right; font-size: 14px; color: rgba(189, 189, 189, 1);">{{ (exportForm.quality / 100).toFixed(2) }}</span>
+            <input class="value value__range" type="range" v-model.number="watermarkFormData.quality" @change="handleQualityChange" />
+            <span style="margin-left: 6px; display: inline-block; width: 30px; text-align: right; font-size: 14px; color: rgba(189, 189, 189, 1);">{{ (watermarkFormData.quality / 100).toFixed(2) }}</span>
           </div>
           <div class="field">
             <label>文件名</label>
-            <input class="value" type="text" v-model.trim="exportForm.fileName" />
+            <input class="value" type="text" v-model.trim="watermarkFormData.name" />
           </div>
           <br/>
         </div>
@@ -64,6 +64,7 @@
 
 <script>
 /* eslint-disable no-unused-vars */
+import { reactive } from 'vue'
 import piexifjs, { piexif } from 'piexifjs'
 import Konva from 'konva'
 import dayjs from 'dayjs'
@@ -114,6 +115,14 @@ const getImageSizeFromSrc = (src) => {
       reject(e)
     }
   })
+}
+
+/**
+ * 水印边框主题
+ */
+const watermarkTheme = {
+  light: 'light',
+  dark: 'dark'
 }
 
 // 缩放比例
@@ -218,10 +227,23 @@ const insertExif = (b64, { M, F, S, ISO, L, T, LEN, version } = {}) => {
 
 export default {
   name: "WatermarkEdit",
+  setup() {
+    const watermarkFormData = reactive({
+      model: '',
+      logo: '',
+      theme: watermarkTheme.light,
+      quality: 92,
+      name: '',
+    })
+    return {
+      watermarkFormData
+    }
+  },
   data() {
     return {
       imagePlaceholder,
       previewWidth,
+      watermarkTheme,
       file: null,
       image: null,
       exif: null,
@@ -241,11 +263,6 @@ export default {
       },
       // konva 的 stage
       stage: null,
-      // 导出图片的表单数据
-      exportForm: {
-        quality: 90,
-        fileName: '',
-      },
       // 导出的文件大小
       fileSize: '',
     }
@@ -257,7 +274,7 @@ export default {
       const file = files[0]
       if (!file) { return }
       this.file = file
-      this.exportForm.fileName = file.name || ''
+      this.watermarkFormData.name = file.name || ''
       readFile2Buffer(this.file).then((ab) => {
         const ab8 = new Uint8Array(ab)
         console.log(ab, ab8)
@@ -361,7 +378,7 @@ export default {
         y: this.imageSize.height / canvasRatio,
         width: this.imageSize.width / canvasRatio,
         height: this.watermark.height / canvasRatio,
-        fill: '#fff',
+        fill: this.watermarkFormData.theme === watermarkTheme.light ? '#fff' : '#000',
         strokeWidth: 0
       })
       layer.add(rect)
@@ -375,7 +392,7 @@ export default {
         fontSize: 28,
         fontFamily: '-apple-system,BlinkMacSystemFont,Helvetica Neue,Helvetica,Segoe UI,Arial,Roboto,PingFang SC,miui,Hiragino Sans GB,Microsoft Yahei,sans-serif',
         fontStyle: 'bold',
-        fill: '#000',
+        fill: this.watermarkFormData.theme === watermarkTheme.light ? '#000' : '#fff',
         width: 500,
         padding,
         align: 'left'
@@ -406,7 +423,7 @@ export default {
         fontSize: config.text1.fontSize,
         fontFamily: config.fontFamily,
         fontStyle: 'bold',
-        fill: '#000',
+        fill: this.watermarkFormData.theme === watermarkTheme.light ? '#000' : '#fff',
         padding,
         align: 'left'
       })
@@ -498,7 +515,7 @@ export default {
       const dataURL = this.stage.toDataURL({
         mimeType: 'image/jpeg',
         pixelRatio: canvasRatio,
-        quality: this.exportForm.quality / 100
+        quality: this.watermarkFormData.quality / 100
       });
       const nDataURL = this.exif ? insertExif(dataURL, this.exif) : dataURL;
       const fileSize = byte2Mb(getBase64ByteSize(nDataURL), 2);
@@ -524,26 +541,26 @@ export default {
       const dataURL = this.stage.toDataURL({
         mimeType: 'image/jpeg',
         pixelRatio: canvasRatio,
-        quality: this.exportForm.quality / 100
+        quality: this.watermarkFormData.quality / 100
       })
       const nDataURL = this.exif ? insertExif(dataURL, this.exif) : dataURL;
       // const fileSize = byte2Mb(getBase64ByteSize(nDataURL), 3);
       // console.log('fileSize = ', fileSize);
-      downloadURI(nDataURL,  this.exportForm.fileName || 'image.jpg');
+      downloadURI(nDataURL,  this.watermarkFormData.name || 'image.jpg');
     },
     handleClearClick() {
-      this.stage.destroy();
-      this.stage = null;
+      if (this.stage) {
+        this.stage.destroy();
+        this.stage = null;
+      }
       this.file = null;
       this.image = null;
       this.imageSize = {
         width: 0,
         height: 0
       };
-      this.exportForm = {
-        quality: 90,
-        fileName: '',
-      };
+      this.watermarkFormData.quality = 92;
+      this.watermarkFormData.name = '';
       this.calcExportFileSize();
     }
   }
