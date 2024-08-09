@@ -29,7 +29,7 @@
     "downloadjs": "^1.4.7",
     "konva": "^8.4.0",
     "piexifjs": "^1.0.6",
-    "vue": "^2.6.14"
+    "vue": "^2.7.16"
   },
   "devDependencies": {
     "@babel/core": "^7.12.16",
@@ -58,7 +58,9 @@
       "parser": "@babel/eslint-parser"
     },
     "rules": {},
-    "ignorePatterns": ["**/*/*.d.ts"]
+    "ignorePatterns": [
+      "**/*/*.d.ts"
+    ]
   },
   "browserslist": [
     "> 1%",
