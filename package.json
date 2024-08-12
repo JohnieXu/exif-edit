@@ -29,7 +29,8 @@
     "downloadjs": "^1.4.7",
     "konva": "^8.4.0",
     "piexifjs": "^1.0.6",
-    "vue": "^2.7.16"
+    "vue": "^2.7.16",
+    "vue-konva": "2"
   },
   "devDependencies": {
     "@babel/core": "^7.12.16",
