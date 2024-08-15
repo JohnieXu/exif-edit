@@ -13,9 +13,33 @@
       <v-stage id="container" :config="stageConfig">
         <v-layer>
           <v-image :config="previewImageConfig"></v-image>
+          <!-- 水印背景色 -->
           <v-rect :config="watermarkBgConfig"></v-rect>
+          <!-- 左侧相机型号 -->
           <v-text :config="cameraDataConfig"></v-text>
-          <v-text :config="exifDataConfig"></v-text>
+          <!-- 右侧拍摄参数 -->
+          <v-group :config="{
+            x: 200,
+            y: imageSize.height / 1,
+            width: imageSize.width,
+            height: watermarkBgConfig.height,
+          }">
+            <v-group :config="{
+                x: 0,
+                y: 0,
+                width: imageSize.width,
+                height: watermarkBgConfig.height,
+            }">
+              <!-- 相机LOGO -->
+              <v-image :config="cameraLogoConfig"></v-image>
+              <!-- 竖线 -->
+              <v-line :config="lineConfig"></v-line>
+              <!-- 拍摄参数 -->
+              <v-text ref="aaa" :config="exifDataConfig"></v-text>
+              <!-- 拍摄时间 -->
+              <v-text :config="exifTimeConfig"></v-text>
+            </v-group>
+          </v-group>
         </v-layer>
       </v-stage>
     </div>
@@ -235,6 +259,18 @@ const insertExif = (b64, { M, F, S, ISO, L, T, LEN, version } = {}) => {
   return nb64
 }
 
+/**
+ * 转换为正确的日期格式
+ * 2023:01:27 12:00:00 转换为 2023.01.27 12:00:00
+ */
+function tranformT (T) {
+  if (!T) { return T }
+  const y = T.split(' ')[0]
+  const t = T.split(' ')[1]
+  const _y = y.replaceAll(':', '.')
+  return [_y, t].join(' ')
+}
+
 export default {
   name: "WatermarkEdit",
   setup() {
@@ -254,6 +290,8 @@ export default {
     })
     // 预览图image对象
     const previewImage = shallowRef(null)
+    // 相机Logo对象
+    const logoImage = shallowRef(null)
     // 图片Exif数据
     const imageExif = reactive({
       L: 50,
@@ -317,22 +355,28 @@ export default {
         fontFamily: '-apple-system,BlinkMacSystemFont,Helvetica Neue,Helvetica,Segoe UI,Arial,Roboto,PingFang SC,miui,Hiragino Sans GB,Microsoft Yahei,sans-serif',
         fontStyle: 'bold',
         fill: watermarkFormData.theme === watermarkTheme.light ? '#000' : '#fff',
-        width: 500,
+        // width: 500,
         padding: 40,
         align: 'left'
       }
     })
+
+    const config = {
+      text1: {
+        fontSize: 24,
+      },
+      text2: {
+        fontSize: 19,
+      },
+      fontFamily: '-apple-system,BlinkMacSystemFont,Helvetica Neue,Helvetica,Segoe UI,Arial,Roboto,PingFang SC,miui,Hiragino Sans GB,Microsoft Yahei,sans-serif',
+      textGap1: 14
+    }
+    const logoWidth = config.text1.fontSize + config.text2.fontSize + config.textGap1
+    const T = tranformT(imageExif.T)
+    const timeStr = T && dayjs(T).format('YYYY.MM.DD HH:mm:ss') !== 'Invalid Date' ? dayjs(T).format('YYYY.MM.DD HH:mm:ss') : dayjs().format('YYYY.MM.DD HH:mm:ss')
+    const padding = 40
+
     const exifDataConfig = computed(() => {
-      const config = {
-        text1: {
-          fontSize: 24,
-        },
-        text2: {
-          fontSize: 19,
-        },
-        fontFamily: '-apple-system,BlinkMacSystemFont,Helvetica Neue,Helvetica,Segoe UI,Arial,Roboto,PingFang SC,miui,Hiragino Sans GB,Microsoft Yahei,sans-serif',
-        textGap1: 14
-      }
       const exifList = [
         imageExif.L ? imageExif.L + 'mm' : undefined,
         imageExif.F ? 'f/' + imageExif.F : undefined,
@@ -347,8 +391,36 @@ export default {
         fontFamily: config.fontFamily,
         fontStyle: 'bold',
         fill: watermarkFormData.theme === watermarkTheme.light ? '#000' : '#fff',
-        padding: 40,
+        padding,
         align: 'left'
+      }
+    })
+    const exifTimeConfig = computed(() => {
+      return {
+        x: padding,
+        y: padding + config.text1.fontSize + config.textGap1,
+        text: timeStr,
+        fontSize: config.text2.fontSize,
+        fontFamily: config.fontFamily,
+        fill: '#666',
+        padding: 0,
+        align: 'left',
+      }
+    })
+    const cameraLogoConfig = computed(() => {
+      return {
+        image: logoImage.value,
+        x: -(logoWidth + 0),
+        y: padding,
+        width: logoWidth,
+        height: logoWidth,
+      }
+    })
+    const lineConfig = computed(() => {
+      return {
+        points: [padding / 2, padding, padding / 2, padding + logoWidth],
+        stroke: '#c3c3c3',
+        strokeWidth: 1,
       }
     })
     return {
@@ -357,12 +429,16 @@ export default {
       sceneSize,
       watermark,
       previewImage,
+      logoImage,
       imageExif,
       stageConfig,
       previewImageConfig,
       watermarkBgConfig,
       cameraDataConfig,
       exifDataConfig,
+      exifTimeConfig,
+      cameraLogoConfig,
+      lineConfig,
     }
   },
   data() {
@@ -419,6 +495,7 @@ export default {
           console.log(exif)
           // exif.version = exif.version || defaultExifVersion
           if (this.isInValidExif(exif) ) {
+            console.log('exif is inValid use default')
             this.imageExif.L = 50
             this.imageExif.M = 'NIKON Z 5'
             this.imageExif.F = 1.8
@@ -426,6 +503,7 @@ export default {
             this.imageExif.ISO = 100
             this.imageExif.T = dayjs().format('YYYY.MM.DD HH:mm:ss')
           } else {
+            console.log('exif valid')
             this.imageExif.L = exif.L
             this.imageExif.M = exif.M
             this.imageExif.F = exif.F
@@ -433,6 +511,9 @@ export default {
             this.imageExif.ISO = exif.ISO
             this.imageExif.T = exif.T
           }
+          getImageSizeFromSrc(modelToIconPath(this.imageExif.M)).then(({ image: cameraLogo }) => {
+            this.logoImage = cameraLogo
+          })
         }).catch((e) => {
           console.error(e)
           captureException(e)
@@ -683,6 +764,12 @@ export default {
       this.watermarkFormData.quality = 92;
       this.watermarkFormData.name = '';
       this.calcExportFileSize();
+    }
+  },
+  mounted () {
+    window.aaa = () => {
+      console.log(this.$refs.aaa)
+      return this.$refs.aaa
     }
   }
 }
