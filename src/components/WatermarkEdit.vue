@@ -10,7 +10,7 @@
       </div>
       <!-- <input v-if="!file" ref="file" :class="bem('file')" type="file" name="file" id="file" accept="image/jpeg, image/tiff" @change="handleFileChange" /> -->
       <!-- <div ref="container" id="container" :class="bem('preivew-container')"></div> -->
-      <v-stage id="container" :config="stageConfig">
+      <v-stage ref="stage" id="container" :config="stageConfig">
         <v-layer>
           <v-image :config="previewImageConfig"></v-image>
           <!-- 水印背景色 -->
@@ -528,6 +528,7 @@ export default {
       }).then(() => {
         // this.initStage()
         this.initScene()
+        this.calcExportFileSize()
       })
     },
     initStage() {
@@ -712,11 +713,13 @@ export default {
       return noExif
     },
     calcExportFileSize () {
-      if (!this.stage) {
+      const stage = this.$refs.stage && this.$refs.stage._konvaNode;
+      console.log(stage);
+      if (!stage) {
         this.fileSize = '';
         return
       }
-      const dataURL = this.stage.toDataURL({
+      const dataURL = stage.toDataURL({
         mimeType: 'image/jpeg',
         pixelRatio: canvasRatio,
         quality: this.watermarkFormData.quality / 100
