@@ -2,7 +2,7 @@
   <div :class="bem()">
     <!-- 图片预览 -->
     <div :class="bem('preview')">
-      <img v-if="previewImageData" :class="bem('preview-image')" :src="previewImageUrl" alt="img" />
+      <img v-if="previewImageData" :class="bem('preview-image')" :src="previewImageUrl || previewImageData" alt="img" />
       <div v-else :class="bem('preview-image', 'placeholder')">
         <div :class="bem('preview-image-icon')">
           <div v-html="imagePlaceholder"></div>
@@ -221,39 +221,33 @@ export default {
     }
   },
   watch: {
-    // b64 (b64) {
-    //   if (b64) {
-    //     const exif = parseExifData(getExifData(b64))
-    //     this.exif = exif
-    //   }
-    // }
-    // exif: {
-    //   deep: true,
-    //   handler (exif) {
-    //     this.insertExif(exif)
-    //   }
-    // },
-    // M (M) {
-    //   this.insertExif({ M })
-    // },
-    // F (F) {
-    //   this.insertExif({ F })
-    // },
-    // S (S) {
-    //   this.insertExif({ S })
-    // },
-    // ISO (ISO) {
-    //   this.insertExif({ ISO })
-    // },
-    // L (L) {
-    //   this.insertExif({ L })
-    // },
-    // T (T) {
-    //   this.insertExif({ T })
-    // },
-    // LEN (LEN) {
-    //   this.insertExif({ LEN })
-    // }
+    b64 (b64) {
+      if (!b64) {
+        this.imgData = null
+        this.file = null
+        if (this.previewImageUrl) {
+          revokeObjectURL(this.previewImageUrl)
+        }
+        this.previewImageUrl = null
+        this.exif = cloneDeep(defaultExif)
+        return
+      }
+      if (this.previewImageUrl) {
+        revokeObjectURL(this.previewImageUrl)
+        this.previewImageUrl = null
+      }
+      try {
+        const exifData = getExifData(b64)
+        const exif = parseExifData(exifData)
+        this.showNoExifToast(exif)
+        exif.version = exif.version || defaultExifVersion
+        this.exif = exif
+      } catch (e) {
+        console.error(e)
+        captureException(e)
+        window.alert(`解析图片 Exif 数据失败：${e.message}`)
+      }
+    }
   },
   mounted () {
     this.handleResetClick()
