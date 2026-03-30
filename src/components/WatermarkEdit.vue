@@ -4,18 +4,16 @@
       <div class="flex-1 lg:max-w-[400px]">
         <div
           v-if="!file"
-          class="flex min-h-[280px] items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50"
+          class="relative flex min-h-[280px] items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50"
         >
-          <div class="relative inline-flex items-center justify-center">
-            <div v-html="imagePlaceholder"></div>
-            <input
-              ref="fileRef"
-              type="file"
-              accept="image/jpeg, image/tiff"
-              class="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-              @change="handleFileChange"
-            />
-          </div>
+          <div class="h-24 w-24 text-slate-400 [&_.icon]:h-full [&_.icon]:w-full [&_.icon_path]:fill-[#94a3b8]" v-html="imagePlaceholder"></div>
+          <input
+            ref="fileRef"
+            type="file"
+            accept="image/jpeg, image/tiff"
+            class="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+            @change="handleFileChange"
+          />
         </div>
         <div ref="containerRef" class="w-full [&_.konvajs-content]:mx-auto [&_.konvajs-content]:shadow-sm"></div>
       </div>

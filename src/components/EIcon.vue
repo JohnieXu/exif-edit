@@ -1,7 +1,9 @@
 <template>
-  <span class="shrink-0 leading-none text-[0]" :class="className">
-    <component :is="iconRenderer" />
-  </span>
+  <span
+    class="inline-flex shrink-0 items-center justify-center leading-none text-[12px] [&_svg]:h-[14px] [&_svg]:w-[14px]"
+    :class="className"
+    v-html="iconHtml"
+  ></span>
 </template>
 
 <script setup lang="ts">
@@ -13,18 +15,12 @@ const props = defineProps<{
   className?: string
 }>()
 
-const iconRenderer = computed(() => {
+const iconHtml = computed(() => {
   if (!props.name) {
-    return 'span'
+    return ''
   }
   const lowerName = props.name.toLowerCase()
   const matchedModel = cameraBrandMatchList.find((model) => lowerName.includes(model))
-  const iconHtml = cameraBrandIconSvg[props.name] || (matchedModel ? cameraBrandIconSvg[matchedModel] : '')
-  return {
-    template: `<span class="inline-flex items-center justify-center text-[12px] [&_svg]:h-[14px] [&_svg]:w-[14px]" v-html="icon"></span>`,
-    data() {
-      return { icon: iconHtml || '' }
-    }
-  }
+  return cameraBrandIconSvg[props.name] || (matchedModel ? cameraBrandIconSvg[matchedModel] : '')
 })
 </script>

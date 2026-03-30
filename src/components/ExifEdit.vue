@@ -1,10 +1,11 @@
 <template>
   <div class="flex flex-col gap-5 rounded-2xl bg-gradient-to-r from-[#FBAB7E] via-[#F8BD72] to-[#F7CE68] p-5 md:flex-row md:p-6">
-    <div class="flex flex-1 items-center justify-center py-2">
+    <div class="relative flex flex-1 items-center justify-center py-2">
       <img v-if="previewImageData" class="w-full rounded-xl object-contain" :src="previewImageUrl || previewImageData" alt="img" />
       <div v-else class="inline-block">
-        <div class="relative inline-block transition-transform hover:scale-105">
-          <div class="[&_.icon]:h-auto [&_.icon]:w-20" v-html="imagePlaceholder"></div>
+        <div class="relative inline-flex flex-col items-center gap-2 transition-transform hover:scale-105">
+          <div class="[&_.icon]:h-auto [&_.icon]:w-24" v-html="imagePlaceholder"></div>
+          <span class="text-xs text-white/90">点击上传图片</span>
           <input
             ref="fileInputRef"
             class="absolute inset-0 h-full w-full cursor-pointer opacity-0"
@@ -124,13 +125,15 @@ const getExifData = (input: string) => piexifjs.load(input)
 
 const parseExifData = (exifData: Record<string, any>) => {
   if (!exifData) return cloneDeep(defaultExif)
-  const M = exifData['0th'][piexif.ImageIFD.Model]
-  const F = exifData.Exif[piexif.ExifIFD.FNumber]
-  const S = exifData.Exif[piexif.ExifIFD.ExposureTime]
-  const ISO = exifData.Exif[piexif.ExifIFD.ISOSpeedRatings]
-  const L = exifData.Exif[piexif.ExifIFD.FocalLength]
-  const LEN = exifData.Exif[piexif.ExifIFD.LensModel]
-  const T = exifData.Exif[piexif.ExifIFD.DateTimeOriginal]
+  const base0th = exifData['0th'] || {}
+  const baseExif = exifData.Exif || {}
+  const M = base0th[piexif.ImageIFD.Model]
+  const F = baseExif[piexif.ExifIFD.FNumber]
+  const S = baseExif[piexif.ExifIFD.ExposureTime]
+  const ISO = baseExif[piexif.ExifIFD.ISOSpeedRatings]
+  const L = baseExif[piexif.ExifIFD.FocalLength]
+  const LEN = baseExif[piexif.ExifIFD.LensModel]
+  const T = baseExif[piexif.ExifIFD.DateTimeOriginal]
   return {
     M: M || null,
     F: F && F[0] && F[1] ? F[0] / F[1] : null,
@@ -177,17 +180,17 @@ const insertExif = ({ b64, M, F, S, ISO, L, T, LEN }: Partial<ExifForm> & { b64?
   const th: Record<number, string | null> = {
     [piexif.ImageIFD.Model]: M || exif.value.M,
   }
-  const FValue = (F ?? exif.value.F) as number
-  const SValue = (S ?? exif.value.S) as string | number
-  const LValue = (L ?? exif.value.L) as number
-  const ISOValue = ISO ?? exif.value.ISO
+  const FValue = Number(F ?? exif.value.F)
+  const SValue = Number(S ?? exif.value.S)
+  const LValue = Number(L ?? exif.value.L)
+  const ISOValue = Number(ISO ?? exif.value.ISO)
   const exifPayload: Record<number, any> = {
     [piexif.ExifIFD.ExifVersion]: exif.value.version,
-    [piexif.ExifIFD.FNumber]: `${FValue}`.includes('.') ? [FValue * 100, 100] : [FValue, 1],
-    [piexif.ExifIFD.ExposureTime]: [1, Number(SValue)],
-    [piexif.ExifIFD.ISOSpeed]: Number(ISOValue),
-    [piexif.ExifIFD.ISOSpeedRatings]: Number(ISOValue),
-    [piexif.ExifIFD.FocalLength]: [Number(LValue) * 10, 10],
+    [piexif.ExifIFD.FNumber]: Number.isFinite(FValue) && `${FValue}`.includes('.') ? [FValue * 100, 100] : [FValue, 1],
+    [piexif.ExifIFD.ExposureTime]: [1, SValue],
+    [piexif.ExifIFD.ISOSpeed]: ISOValue,
+    [piexif.ExifIFD.ISOSpeedRatings]: ISOValue,
+    [piexif.ExifIFD.FocalLength]: [LValue * 10, 10],
     [piexif.ExifIFD.LensModel]: LEN || exif.value.LEN,
     [piexif.ExifIFD.DateTimeOriginal]: T || exif.value.T,
     [piexif.ExifIFD.DateTimeDigitized]: T || exif.value.T,
