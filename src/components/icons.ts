@@ -1,0 +1,31 @@
+export const cameraBrandIconSvg: Record<string, string> = {
+  xiaomi: '<span style="font-weight:700; font-size:12px; color:#111;">MI</span>',
+  redmi: '<span style="font-weight:700; font-size:12px; color:#111;">MI</span>',
+  huawei: '<span style="font-weight:700; font-size:12px; color:#111;">HUAWEI</span>',
+  honor: '<span style="font-weight:700; font-size:12px; color:#111;">HONOR</span>',
+  iphone: '<span style="font-weight:700; font-size:12px; color:#111;">iPhone</span>',
+  apple: '<span style="font-weight:700; font-size:12px; color:#111;">APPLE</span>',
+  oppo: '<span style="font-weight:700; font-size:12px; color:#111;">OPPO</span>',
+  meizu: '<span style="font-weight:700; font-size:12px; color:#111;">MEIZU</span>',
+  realme: '<span style="font-weight:700; font-size:12px; color:#111;">realme</span>',
+  oneplus: '<span style="font-weight:700; font-size:12px; color:#111;">1+</span>',
+  samsung: '<span style="font-weight:700; font-size:12px; color:#111;">SAMSUNG</span>',
+  canon: '<span style="font-weight:700; font-size:12px; color:#111;">Canon</span>',
+  nikon: '<span style="font-weight:700; font-size:12px; color:#111;">Nikon</span>',
+  sony: '<span style="font-weight:700; font-size:12px; color:#111;">Sony</span>',
+  fujifilm: '<span style="font-weight:700; font-size:12px; color:#111;">FUJI</span>',
+  leica: '<span style="font-weight:700; font-size:12px; color:#111;">LEICA</span>',
+  clear: '<span style="font-size:12px;">🧹</span>',
+  reset: '<span style="font-size:12px;">↺</span>',
+  copy: '<span style="font-size:12px;">⎘</span>',
+  paste: '<span style="font-size:12px;">📋</span>',
+  download: '<span style="font-size:12px;">⬇</span>',
+  ISO: '<span style="font-size:10px; font-weight:700;">ISO</span>',
+  LEN: '<span style="font-size:10px; font-weight:700;">LEN</span>',
+  F: '<span style="font-size:10px; font-weight:700;">F</span>',
+  S: '<span style="font-size:10px; font-weight:700;">S</span>',
+  L: '<span style="font-size:10px; font-weight:700;">L</span>',
+  T: '<span style="font-size:10px; font-weight:700;">T</span>'
+}
+
+export const cameraBrandMatchList = 'xiaomi,redmi,huawei,honor,iphone,oppo,meizu,realme,oneplus,samsung,canon,nikon,sony,fujifilm,leica'.split(',')

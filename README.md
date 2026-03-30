@@ -16,32 +16,22 @@
 
 ## 安装依赖
 ```
-yarn install
+pnpm install
 ```
 
 ### 开发环境启动
 ```
-yarn serve
+pnpm dev
 ```
 
-### 构建打包 demo 应用
+### 生产构建
 ```
-yarn build:app
-```
-
-### 构建打包组件
-```
-yarn build:lib
+pnpm build
 ```
 
-### 构建打包 web-component
+### 本地预览构建产物
 ```
-yarn build:wc
-```
-
-### 代码检查
-```
-yarn lint
+pnpm preview
 ```
 
 ## 生产环境启动

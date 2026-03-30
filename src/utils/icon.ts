@@ -10,18 +10,13 @@ import samsung from '@/assets/icons/samsung.png'
 import sony from '@/assets/icons/sony.png'
 import vivo from '@/assets/icons/vivo.png'
 
-/**
- * 设备型号（品牌）转换为图标路径
- * @param {String} M 设备型号-exif 数据中的 model
- * @returns 品牌对应的图标路径
- */
-export const modelToIconPath = (M) => {
+export const modelToIconPath = (model?: string | null): string => {
   const defaultIcon = leica
-  if (!M) {
+  if (!model) {
     return defaultIcon
   }
-  const iconMap = {
-    apple: apple,
+  const iconMap: Record<string, string> = {
+    apple,
     iphone: apple,
     canon,
     fujifilm: defaultIcon,
@@ -39,7 +34,8 @@ export const modelToIconPath = (M) => {
     sony,
     vivo,
   }
-  const matched = Object.keys(iconMap).filter((key) => M.toLocaleLowerCase().includes(key))
+  const normalized = model.toLowerCase()
+  const matched = Object.keys(iconMap).filter((key) => normalized.includes(key))
   if (!matched.length) {
     return defaultIcon
   }

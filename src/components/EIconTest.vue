@@ -1,42 +1,20 @@
 <template>
-  <div :class="bem()">
-    <div :class="bem('icon-item')" v-for="(_, name) in iconMap" :key="name">
+  <div class="flex flex-wrap gap-3 rounded-xl border border-slate-200 bg-white p-4">
+    <div
+      v-for="name in names"
+      :key="name"
+      class="flex items-center gap-2 rounded-md border border-slate-100 bg-slate-50 px-2 py-1 text-xs text-slate-600"
+    >
       <EIcon :name="name" />
+      <span>{{ name }}</span>
     </div>
   </div>
 </template>
 
-<script>
-import { createBEM } from '../utils/className'
-import { iconMap } from './data'
+<script setup lang="ts">
+import { computed } from 'vue'
 import EIcon from './EIcon.vue'
+import { cameraBrandIconSvg } from './icons'
 
-const bem = createBEM("e-icon-test")
-
-export default {
-  name: "EIconTest",
-  components: {
-    EIcon
-  },
-  props: {
-    name: {
-      type: String,
-      required: true
-    },
-  },
-  data () {
-    return {
-      iconMap,
-    }
-  },
-  methods: {
-    bem
-  }
-}
+const names = computed(() => Object.keys(cameraBrandIconSvg))
 </script>
-
-<style>
-.pe_e-icon-test__icon-item {
-  margin: 8px;
-}
-</style>

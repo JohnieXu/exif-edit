@@ -1,63 +1,61 @@
 <template>
-  <div :class="bem()">
-    <span :class="bem('button', value === '0' ? 'active' : '')" @click="handleItemClick('0')">Exif编辑</span>
-    <span v-if="show.watermark" :class="bem('button', value === '1' ? 'active' : '')" @click="handleItemClick('1')">水印边框</span>
-    <span v-if="show.demo" :class="bem('button', value === '2' ? 'active' : '')" @click="handleItemClick('2')">Demo</span>
+  <div class="mb-5 flex items-center gap-3 text-sm">
+    <button
+      class="border-b-2 px-1 pb-1 transition"
+      :class="modelValue === '0' ? 'border-orange-400 text-slate-900' : 'border-transparent text-slate-500 hover:text-slate-700'"
+      type="button"
+      @click="handleItemClick('0')"
+    >
+      Exif编辑
+    </button>
+    <button
+      v-if="show.watermark"
+      class="border-b-2 px-1 pb-1 transition"
+      :class="modelValue === '1' ? 'border-orange-400 text-slate-900' : 'border-transparent text-slate-500 hover:text-slate-700'"
+      type="button"
+      @click="handleItemClick('1')"
+    >
+      水印边框
+    </button>
+    <button
+      v-if="show.demo"
+      class="border-b-2 px-1 pb-1 transition"
+      :class="modelValue === '2' ? 'border-orange-400 text-slate-900' : 'border-transparent text-slate-500 hover:text-slate-700'"
+      type="button"
+      @click="handleItemClick('2')"
+    >
+      Demo
+    </button>
   </div>
 </template>
 
-<script>
-import { createBEM } from '@/utils/className';
-import { onDevelop } from '@/utils/common';
+<script setup lang="ts">
+import { reactive } from 'vue'
+import { onDevelop } from '@/utils/common'
 
-const bem = createBEM('type-select')
-
-export default {
-  name: "TypeSelect",
-  model: {
-    value: 'selected',
-    event: 'change'
-  },
-  data () {
-    return {
-      show: {
-        watermark: true,
-        demo: false
-      }
-    }
-  },
-  props: {
-    value: {
-      type: String,
-      default: '0'
-    }
-  },
-  methods: {
-    bem,
-    handleItemClick(selected) {
-      this.$emit('change', selected)
-    }
-  },
-  mounted () {
-    onDevelop(() => {
-      this.show.demo = true
-    })
+const props = withDefaults(
+  defineProps<{
+    modelValue?: string
+  }>(),
+  {
+    modelValue: '0'
   }
-}
-</script>
+)
 
-<style>
-.pe_type-select {
-  margin-bottom: 20px;
+const emit = defineEmits<{
+  (event: 'update:modelValue', selected: string): void
+}>()
+
+const show = reactive({
+  watermark: true,
+  demo: false
+})
+
+const handleItemClick = (selected: string) => {
+  emit('update:modelValue', selected)
 }
-.pe_type-select__button {
-  cursor: pointer;
-  border-bottom: 3px solid transparent;
-}
-.pe_type-select__button:not(:last-child) {
-  margin-right: 10px;
-}
-.pe_type-select__button--active {
-  border-color: #FBAB7E;
-}
-</style>
+
+onDevelop(() => {
+  show.demo = true
+})
+</script>

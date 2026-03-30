@@ -1,15 +1,13 @@
 {
   "name": "exif-edit",
   "version": "0.0.1",
-  "private": false,
+  "private": true,
   "description": "一款基于 vue 的图片 exif 数据编辑器组件。An exif data edtior component with javascript(based on vue).",
   "scripts": {
-    "serve": "vue-cli-service serve",
-    "build:app": "vue-cli-service build",
-    "build:lib": "vue-cli-service build --target lib --name exifEdit src/components/ExifEdit.vue",
-    "build:wc": "vue-cli-service build --target wc --name exif-edit src/components/ExifEdit.vue",
-    "build:docker": "npm run build:app && docker build -t johniexu/exif-edit .",
-    "lint": "vue-cli-service lint"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "type-check": "vue-tsc --noEmit"
   },
   "keywords": [
     "exif",
@@ -24,42 +22,26 @@
   },
   "homepage": "https://github.com/johniexu/exif-edit#readme",
   "dependencies": {
-    "core-js": "^3.49.0",
+    "@sentry/vue": "^10.20.0",
     "dayjs": "^1.11.20",
     "downloadjs": "^1.4.7",
     "konva": "^8.4.3",
     "piexifjs": "^1.0.6",
-    "vue": "^2.7.16"
+    "vue": "^3.5.22"
   },
   "devDependencies": {
-    "@babel/core": "^7.29.0",
-    "@babel/eslint-parser": "^7.28.6",
-    "@sentry/tracing": "^7.120.4",
-    "@sentry/vue": "^7.120.4",
-    "@vue/cli-plugin-babel": "~5.0.9",
-    "@vue/cli-plugin-eslint": "~5.0.9",
-    "@vue/cli-service": "~5.0.9",
-    "eslint": "^7.32.0",
-    "eslint-plugin-vue": "^8.0.3",
-    "vue-template-compiler": "^2.7.16"
-  },
-  "eslintConfig": {
-    "root": true,
-    "env": {
-      "node": true
-    },
-    "extends": [
-      "plugin:vue/essential",
-      "eslint:recommended"
-    ],
-    "parserOptions": {
-      "parser": "@babel/eslint-parser"
-    },
-    "rules": {}
+    "@tailwindcss/vite": "^4.1.13",
+    "@types/node": "^24.5.2",
+    "@vitejs/plugin-vue": "^6.0.1",
+    "tailwindcss": "^4.1.13",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.7",
+    "vue-tsc": "^3.1.1"
   },
   "browserslist": [
     "> 1%",
     "last 2 versions",
     "not dead"
-  ]
+  ],
+  "packageManager": "pnpm@10.16.1"
 }

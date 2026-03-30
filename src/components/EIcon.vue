@@ -1,65 +1,30 @@
-<script>
-import { createBEM } from '../utils/className'
-import { iconMap } from './data'
+<template>
+  <span class="shrink-0 leading-none text-[0]" :class="className">
+    <component :is="iconRenderer" />
+  </span>
+</template>
 
-const bem = createBEM("e-icon")
+<script setup lang="ts">
+import { computed } from 'vue'
+import { cameraBrandIconSvg, cameraBrandMatchList } from './icons'
 
-const models = 'xiaomi,redmi,huawei,honor,iphone,oppo,meizu,realme,oneplus,samsung,canon,nikon,sony,fujifilm,leica'.split(',')
+const props = defineProps<{
+  name: string
+  className?: string
+}>()
 
-export default {
-  name: "EIcon",
-  functional: true,
-  props: {
-    name: {
-      type: String,
-      required: true
-    },
-  },
-  // data () {
-  //   return {
-  //     iconMap
-  //   }
-  // },
-  methods: {
-    bem
-  },
-  render (h, context) {
-    if (!context.props.name) {
-      return <span class={[bem(), context.data.class]}></span>
-    }
-    const matches = models.filter((model) => {
-      return context.props.name.toLocaleLowerCase().includes(model)
-    })
-    const isModelMatch = matches.length > 0
-    const hasRender = iconMap[context.props.name] || iconMap[matches[0]]
-    if (!hasRender) {
-      return <span class={[bem(), context.data.class]}></span>
-    }
-    if (isModelMatch) {
-      return (
-        <span class={[bem(), context.data.class]}>{iconMap[matches[0]](h)}</span>
-      )
-    } else {
-      return (
-        <span class={[bem(), context.data.class]}>{iconMap[context.props.name](h)}</span>
-      )
+const iconRenderer = computed(() => {
+  if (!props.name) {
+    return 'span'
+  }
+  const lowerName = props.name.toLowerCase()
+  const matchedModel = cameraBrandMatchList.find((model) => lowerName.includes(model))
+  const iconHtml = cameraBrandIconSvg[props.name] || (matchedModel ? cameraBrandIconSvg[matchedModel] : '')
+  return {
+    template: `<span class="inline-flex items-center justify-center text-[12px] [&_svg]:h-[14px] [&_svg]:w-[14px]" v-html="icon"></span>`,
+    data() {
+      return { icon: iconHtml || '' }
     }
   }
-}
+})
 </script>
-
-<style>
-.pe_e-icon {
-  flex: 0 0 14px;
-  line-height: 1;
-  font-size: 0;
-  margin-right: 6px;
-}
-.pe_e-icon svg {
-  width: 14px;
-  height: auto;
-}
-.pe_e-icon span {
-  font-size: 14px;
-}
-</style>
