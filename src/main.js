@@ -1,7 +1,10 @@
 import Vue from 'vue'
 import * as Sentry from '@sentry/vue'
+import VueKonva from 'vue-konva'
 // import { BrowserTracing } from '@sentry/tracing'
 import App from './App.vue'
+
+Vue.use(VueKonva)
 
 Vue.config.productionTip = false
 

@@ -9,7 +9,39 @@
         </div>
       </div>
       <!-- <input v-if="!file" ref="file" :class="bem('file')" type="file" name="file" id="file" accept="image/jpeg, image/tiff" @change="handleFileChange" /> -->
-      <div ref="container" id="container" :class="bem('preivew-container')"></div>
+      <!-- <div ref="container" id="container" :class="bem('preivew-container')"></div> -->
+      <v-stage ref="stage" id="container" :config="stageConfig">
+        <v-layer>
+          <v-image :config="previewImageConfig"></v-image>
+          <!-- 水印背景色 -->
+          <v-rect :config="watermarkBgConfig"></v-rect>
+          <!-- 左侧相机型号 -->
+          <v-text :config="cameraDataConfig"></v-text>
+          <!-- 右侧拍摄参数 -->
+          <v-group :config="{
+            x: 200,
+            y: imageSize.height / 1,
+            width: imageSize.width,
+            height: watermarkBgConfig.height,
+          }">
+            <v-group :config="{
+                x: 0,
+                y: 0,
+                width: imageSize.width,
+                height: watermarkBgConfig.height,
+            }">
+              <!-- 相机LOGO -->
+              <v-image :config="cameraLogoConfig"></v-image>
+              <!-- 竖线 -->
+              <v-line :config="lineConfig"></v-line>
+              <!-- 拍摄参数 -->
+              <v-text ref="aaa" :config="exifDataConfig"></v-text>
+              <!-- 拍摄时间 -->
+              <v-text :config="exifTimeConfig"></v-text>
+            </v-group>
+          </v-group>
+        </v-layer>
+      </v-stage>
     </div>
     <!-- 参数区 -->
     <div :class="bem('save-container')">
@@ -18,20 +50,20 @@
           <p class="title">水印设置</p>
           <div class="field">
             <label>型号</label>
-            <input class="value" />
+            <input class="value" v-model="watermarkFormData.model" />
           </div>
           <div class="field">
             <label>图标</label>
-            <select class="value">
-              <option>a</option>
+            <select class="value" v-model="watermarkFormData.logo">
+              <option value="a">a</option>
             </select>
             <img class="icon" :src="require('@/assets/imgs/arrow_right.png')" />
           </div>
           <div class="field">
             <label>主题</label>
-            <select class="value">
-              <option>浅色</option>
-              <option>深色</option>
+            <select class="value" v-model="watermarkFormData.theme">
+              <option :value="watermarkTheme.light">浅色</option>
+              <option :value="watermarkTheme.dark">深色</option>
             </select>
             <img class="icon" :src="require('@/assets/imgs/arrow_right.png')" />
           </div>
@@ -40,12 +72,12 @@
           <p class="title">导出设置</p>
           <div class="field">
             <label>质量</label>
-            <input class="value value__range" type="range" v-model.number="exportForm.quality" @change="handleQualityChange" />
-            <span style="margin-left: 6px; display: inline-block; width: 30px; text-align: right; font-size: 14px; color: rgba(189, 189, 189, 1);">{{ (exportForm.quality / 100).toFixed(2) }}</span>
+            <input class="value value__range" type="range" v-model.number="watermarkFormData.quality" @change="handleQualityChange" />
+            <span style="margin-left: 6px; display: inline-block; width: 30px; text-align: right; font-size: 14px; color: rgba(189, 189, 189, 1);">{{ (watermarkFormData.quality / 100).toFixed(2) }}</span>
           </div>
           <div class="field">
             <label>文件名</label>
-            <input class="value" type="text" v-model.trim="exportForm.fileName" />
+            <input class="value" type="text" v-model.trim="watermarkFormData.name" />
           </div>
           <br/>
         </div>
@@ -64,6 +96,7 @@
 
 <script>
 /* eslint-disable no-unused-vars */
+import { reactive } from 'vue'
 import piexifjs, { piexif } from 'piexifjs'
 import Konva from 'konva'
 import dayjs from 'dayjs'
@@ -74,6 +107,8 @@ import { modelToIconPath } from '@/utils/icon'
 import { onDevelop, removeNull, cloneDeep } from '@/utils/common'
 import { getImageSize, readFile2Buffer, getImageData, getBase64ByteSize, byte2Mb } from '@/utils/file'
 import { imagePlaceholder } from '@/components/data'
+import { computed } from 'vue'
+import { shallowRef } from 'vue'
 
 /**
  * 画布尺寸设计思路：
@@ -114,6 +149,14 @@ const getImageSizeFromSrc = (src) => {
       reject(e)
     }
   })
+}
+
+/**
+ * 水印边框主题
+ */
+const watermarkTheme = {
+  light: 'light',
+  dark: 'dark'
 }
 
 // 缩放比例
@@ -216,36 +259,198 @@ const insertExif = (b64, { M, F, S, ISO, L, T, LEN, version } = {}) => {
   return nb64
 }
 
+/**
+ * 转换为正确的日期格式
+ * 2023:01:27 12:00:00 转换为 2023.01.27 12:00:00
+ */
+function tranformT (T) {
+  if (!T) { return T }
+  const y = T.split(' ')[0]
+  const t = T.split(' ')[1]
+  const _y = y.replaceAll(':', '.')
+  return [_y, t].join(' ')
+}
+
 export default {
   name: "WatermarkEdit",
+  setup() {
+    // 选择的图片像素大小
+    const imageSize = reactive({
+      width: 0,
+      height: 0,
+    })
+    // 界面场景像素大小
+    const sceneSize = reactive({
+      width: 0,
+      height: 0
+    })
+    // 水印相关配置
+    const watermark = reactive({
+      height: 300,
+    })
+    // 预览图image对象
+    const previewImage = shallowRef(null)
+    // 相机Logo对象
+    const logoImage = shallowRef(null)
+    // 图片Exif数据
+    const imageExif = reactive({
+      L: 50,
+      M: 'NIKON Z 5',
+      F: 1.8,
+      S: 200,
+      ISO: 100,
+      T: dayjs().format('YYYY.MM.DD HH:mm:ss'),
+    })
+    const watermarkFormData = reactive({
+      model: '',
+      logo: '',
+      theme: watermarkTheme.light,
+      quality: 92,
+      name: '',
+    })
+    const cameraText = computed(() => {
+      return imageExif.M ? imageExif.M : 'XIAOMI 12S ULTRA';
+    }, {
+      onTrack (e) {
+        console.log(e)
+      },
+      onTrigger (e) {
+        console.log(e)
+      },
+      onChange (e) {
+        console.log(e)
+      }
+    })
+    const stageConfig = computed(() => {
+      return {
+        width: imageSize.width / canvasRatio,
+        height: (imageSize.height + watermark.height) / canvasRatio,
+      }
+    })
+    const previewImageConfig = computed(() => {
+      return {
+        image: previewImage.value,
+        x: 0,
+        y: 0,
+        width: imageSize.width / canvasRatio,
+        height: imageSize.height / canvasRatio,
+      }
+    })
+    const watermarkBgConfig = computed(() => {
+      return {
+        x: 0,
+        y: imageSize.height / canvasRatio,
+        width: imageSize.width / canvasRatio,
+        height: watermark.height / canvasRatio,
+        fill: watermarkFormData.theme === watermarkTheme.light ? '#fff' : '#000',
+        strokeWidth: 0,
+      }
+    })
+    const cameraDataConfig = computed(() => {
+      return {
+        x: 0,
+        y: (imageSize.height + 36) / canvasRatio,
+        text: cameraText.value,
+        fontSize: 28,
+        fontFamily: '-apple-system,BlinkMacSystemFont,Helvetica Neue,Helvetica,Segoe UI,Arial,Roboto,PingFang SC,miui,Hiragino Sans GB,Microsoft Yahei,sans-serif',
+        fontStyle: 'bold',
+        fill: watermarkFormData.theme === watermarkTheme.light ? '#000' : '#fff',
+        // width: 500,
+        padding: 40,
+        align: 'left'
+      }
+    })
+
+    const config = {
+      text1: {
+        fontSize: 24,
+      },
+      text2: {
+        fontSize: 19,
+      },
+      fontFamily: '-apple-system,BlinkMacSystemFont,Helvetica Neue,Helvetica,Segoe UI,Arial,Roboto,PingFang SC,miui,Hiragino Sans GB,Microsoft Yahei,sans-serif',
+      textGap1: 14
+    }
+    const logoWidth = config.text1.fontSize + config.text2.fontSize + config.textGap1
+    const T = tranformT(imageExif.T)
+    const timeStr = T && dayjs(T).format('YYYY.MM.DD HH:mm:ss') !== 'Invalid Date' ? dayjs(T).format('YYYY.MM.DD HH:mm:ss') : dayjs().format('YYYY.MM.DD HH:mm:ss')
+    const padding = 40
+
+    const exifDataConfig = computed(() => {
+      const exifList = [
+        imageExif.L ? imageExif.L + 'mm' : undefined,
+        imageExif.F ? 'f/' + imageExif.F : undefined,
+        imageExif.S ? '1/' + imageExif.S : undefined,
+        imageExif.ISO ? 'ISO' + imageExif.ISO : undefined
+      ]
+      return {
+        x: 0,
+        y: 0,
+        text: exifList.join(' '),
+        fontSize: config.text1.fontSize,
+        fontFamily: config.fontFamily,
+        fontStyle: 'bold',
+        fill: watermarkFormData.theme === watermarkTheme.light ? '#000' : '#fff',
+        padding,
+        align: 'left'
+      }
+    })
+    const exifTimeConfig = computed(() => {
+      return {
+        x: padding,
+        y: padding + config.text1.fontSize + config.textGap1,
+        text: timeStr,
+        fontSize: config.text2.fontSize,
+        fontFamily: config.fontFamily,
+        fill: '#666',
+        padding: 0,
+        align: 'left',
+      }
+    })
+    const cameraLogoConfig = computed(() => {
+      return {
+        image: logoImage.value,
+        x: -(logoWidth + 0),
+        y: padding,
+        width: logoWidth,
+        height: logoWidth,
+      }
+    })
+    const lineConfig = computed(() => {
+      return {
+        points: [padding / 2, padding, padding / 2, padding + logoWidth],
+        stroke: '#c3c3c3',
+        strokeWidth: 1,
+      }
+    })
+    return {
+      watermarkFormData,
+      imageSize,
+      sceneSize,
+      watermark,
+      previewImage,
+      logoImage,
+      imageExif,
+      stageConfig,
+      previewImageConfig,
+      watermarkBgConfig,
+      cameraDataConfig,
+      exifDataConfig,
+      exifTimeConfig,
+      cameraLogoConfig,
+      lineConfig,
+    }
+  },
   data() {
     return {
       imagePlaceholder,
       previewWidth,
+      watermarkTheme,
       file: null,
       image: null,
       exif: null,
-      // 选择的图片像素大小
-      imageSize: {
-        width: 0,
-        height: 0
-      },
-      // 界面场景像素大小
-      sceneSize: {
-        width: 0,
-        height: 0
-      },
-      // 水印相关配置
-      watermark: {
-        height: 300
-      },
       // konva 的 stage
       stage: null,
-      // 导出图片的表单数据
-      exportForm: {
-        quality: 90,
-        fileName: '',
-      },
       // 导出的文件大小
       fileSize: '',
     }
@@ -257,7 +462,7 @@ export default {
       const file = files[0]
       if (!file) { return }
       this.file = file
-      this.exportForm.fileName = file.name || ''
+      this.watermarkFormData.name = file.name || ''
       readFile2Buffer(this.file).then((ab) => {
         const ab8 = new Uint8Array(ab)
         console.log(ab, ab8)
@@ -273,8 +478,9 @@ export default {
           alert(message)
         }
         
-        this.imageSize = imageSize
-        this.image = image
+        this.imageSize.width = imageSize.width
+        this.imageSize.height = imageSize.height
+        this.previewImage = image
         
         const width = previewWidth;
         this.sceneSize = {
@@ -289,10 +495,25 @@ export default {
           console.log(exif)
           // exif.version = exif.version || defaultExifVersion
           if (this.isInValidExif(exif) ) {
-            this.exif = null
+            console.log('exif is inValid use default')
+            this.imageExif.L = 50
+            this.imageExif.M = 'NIKON Z 5'
+            this.imageExif.F = 1.8
+            this.imageExif.S = 200
+            this.imageExif.ISO = 100
+            this.imageExif.T = dayjs().format('YYYY.MM.DD HH:mm:ss')
           } else {
-            this.exif = exif
+            console.log('exif valid')
+            this.imageExif.L = exif.L
+            this.imageExif.M = exif.M
+            this.imageExif.F = exif.F
+            this.imageExif.S = exif.S
+            this.imageExif.ISO = exif.ISO
+            this.imageExif.T = exif.T
           }
+          getImageSizeFromSrc(modelToIconPath(this.imageExif.M)).then(({ image: cameraLogo }) => {
+            this.logoImage = cameraLogo
+          })
         }).catch((e) => {
           console.error(e)
           captureException(e)
@@ -305,8 +526,9 @@ export default {
           // clearFileValue()
         })
       }).then(() => {
-        this.initStage()
+        // this.initStage()
         this.initScene()
+        this.calcExportFileSize()
       })
     },
     initStage() {
@@ -330,7 +552,7 @@ export default {
 
       this.drawImage(layer1)
       this.drawWatermarkBackground(layer1)
-      this.drawCameraData(layer1, { brand: '', model: (this.exif || {}).M || 'XIAOMI 12S ULTRA' }, { padding: 40 })
+      this.drawCameraData(layer1, { brand: '', model: (this.exif || {}).M || 'NIKON Z 5' }, { padding: 40 })
       this.drawExifData(layer1, exif || {}, { padding: 40 })
       this.calcExportFileSize()
     },
@@ -361,7 +583,7 @@ export default {
         y: this.imageSize.height / canvasRatio,
         width: this.imageSize.width / canvasRatio,
         height: this.watermark.height / canvasRatio,
-        fill: '#fff',
+        fill: this.watermarkFormData.theme === watermarkTheme.light ? '#fff' : '#000',
         strokeWidth: 0
       })
       layer.add(rect)
@@ -375,7 +597,7 @@ export default {
         fontSize: 28,
         fontFamily: '-apple-system,BlinkMacSystemFont,Helvetica Neue,Helvetica,Segoe UI,Arial,Roboto,PingFang SC,miui,Hiragino Sans GB,Microsoft Yahei,sans-serif',
         fontStyle: 'bold',
-        fill: '#000',
+        fill: this.watermarkFormData.theme === watermarkTheme.light ? '#000' : '#fff',
         width: 500,
         padding,
         align: 'left'
@@ -406,7 +628,7 @@ export default {
         fontSize: config.text1.fontSize,
         fontFamily: config.fontFamily,
         fontStyle: 'bold',
-        fill: '#000',
+        fill: this.watermarkFormData.theme === watermarkTheme.light ? '#000' : '#fff',
         padding,
         align: 'left'
       })
@@ -491,16 +713,18 @@ export default {
       return noExif
     },
     calcExportFileSize () {
-      if (!this.stage) {
+      const stage = this.$refs.stage && this.$refs.stage._konvaNode;
+      console.log(stage);
+      if (!stage) {
         this.fileSize = '';
         return
       }
-      const dataURL = this.stage.toDataURL({
+      const dataURL = stage.toDataURL({
         mimeType: 'image/jpeg',
         pixelRatio: canvasRatio,
-        quality: this.exportForm.quality / 100
+        quality: this.watermarkFormData.quality / 100
       });
-      const nDataURL = this.exif ? insertExif(dataURL, this.exif) : dataURL;
+      const nDataURL = this.imageExif ? insertExif(dataURL, this.imageExif) : dataURL;
       const fileSize = byte2Mb(getBase64ByteSize(nDataURL), 2);
       this.fileSize = fileSize;
     },
@@ -524,27 +748,31 @@ export default {
       const dataURL = this.stage.toDataURL({
         mimeType: 'image/jpeg',
         pixelRatio: canvasRatio,
-        quality: this.exportForm.quality / 100
+        quality: this.watermarkFormData.quality / 100
       })
-      const nDataURL = this.exif ? insertExif(dataURL, this.exif) : dataURL;
+      const nDataURL = this.imageExif ? insertExif(dataURL, this.imageExif) : dataURL;
       // const fileSize = byte2Mb(getBase64ByteSize(nDataURL), 3);
       // console.log('fileSize = ', fileSize);
-      downloadURI(nDataURL,  this.exportForm.fileName || 'image.jpg');
+      downloadURI(nDataURL,  this.watermarkFormData.name || 'image.jpg');
     },
     handleClearClick() {
-      this.stage.destroy();
-      this.stage = null;
+      if (this.stage) {
+        this.stage.destroy();
+        this.stage = null;
+      }
       this.file = null;
-      this.image = null;
-      this.imageSize = {
-        width: 0,
-        height: 0
-      };
-      this.exportForm = {
-        quality: 90,
-        fileName: '',
-      };
+      this.previewImage = null;
+      this.imageSize.width = 0;
+      this.imageSize.height = 0;
+      this.watermarkFormData.quality = 92;
+      this.watermarkFormData.name = '';
       this.calcExportFileSize();
+    }
+  },
+  mounted () {
+    window.aaa = () => {
+      console.log(this.$refs.aaa)
+      return this.$refs.aaa
     }
   }
 }

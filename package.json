@@ -29,7 +29,8 @@
     "downloadjs": "^1.4.7",
     "konva": "^8.4.3",
     "piexifjs": "^1.0.6",
-    "vue": "^2.7.16"
+    "vue": "^2.7.16",
+    "vue-konva": "2"
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",
@@ -41,6 +42,8 @@
     "@vue/cli-service": "~5.0.9",
     "eslint": "^7.32.0",
     "eslint-plugin-vue": "^8.0.3",
+    "node-polyfill-webpack-plugin": "^3.0.0",
+    "typescript": "^5.4.5",
     "vue-template-compiler": "^2.7.16"
   },
   "eslintConfig": {
@@ -55,7 +58,10 @@
     "parserOptions": {
       "parser": "@babel/eslint-parser"
     },
-    "rules": {}
+    "rules": {},
+    "ignorePatterns": [
+      "**/*/*.d.ts"
+    ]
   },
   "browserslist": [
     "> 1%",
