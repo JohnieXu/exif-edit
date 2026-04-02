@@ -95,6 +95,7 @@
 </template>
 
 <script setup lang="ts">
+import '../style.css'
 import piexifjs from 'piexifjs'
 import { computed, onMounted, ref } from 'vue'
 import { DEFAULT_EXIF, DEFAULT_EXIF_VERSION } from '@/config/const'
