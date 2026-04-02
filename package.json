@@ -2,6 +2,7 @@
   "name": "exif-edit",
   "version": "0.0.1",
   "private": true,
+  "type": "module",
   "description": "一款基于 vue 的图片 exif 数据编辑器组件。An exif data edtior component with javascript(based on vue).",
   "scripts": {
     "dev": "vite",
@@ -30,12 +31,13 @@
     "vue": "^3.5.31"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.2.2",
     "@types/node": "^24.12.0",
     "@vitejs/plugin-vue": "^6.0.5",
-    "tailwindcss": "^4.2.2",
+    "autoprefixer": "^10.4.27",
+    "postcss": "^8.5.8",
+    "tailwindcss": "^3.4.19",
     "typescript": "^5.9.3",
-    "vite": "^7.3.1",
+    "vite": "^6.0.0",
     "vue-tsc": "^3.2.6"
   },
   "browserslist": [
@@ -43,5 +45,10 @@
     "last 2 versions",
     "not dead"
   ],
-  "packageManager": "pnpm@10.16.1"
+  "packageManager": "pnpm@10.16.1",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
 }

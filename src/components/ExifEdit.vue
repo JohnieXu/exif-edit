@@ -96,7 +96,7 @@
 
 <script setup lang="ts">
 import piexifjs from 'piexifjs'
-import { computed, onMounted, ref, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { DEFAULT_EXIF, DEFAULT_EXIF_VERSION } from '@/config/const'
 import type { ExifForm } from '@/types/exif'
 import { imagePlaceholder } from '@/components/imagePlaceholder'

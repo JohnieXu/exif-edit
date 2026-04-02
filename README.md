@@ -14,6 +14,18 @@
   <img src="./docs/imgs/8.jpg" alt="8.jpg" width="400" />
 </p>
 
+## 技术框架与核心选型
+
+本项目为纯粹的客户端应用（即无服务端依赖），主要选型如下：
+
+- **Vue 3 + Vite 6**：作为核心架构，替换了早期的 Webpack，提升开发体验与构建热更速度。
+- **Tailwind CSS v3**：用于高效编写定制化界面样式。
+  > ⚠️ **避坑提醒**：请勿升级至 Tailwind v4。因在特定环境（Windows + Node 22）下，v4 引用的原生 Rust 扩展引擎会引发 Vite 进程发生无报错的永久性死锁挂起。相关调试与排查记录请参见 [构建问题修复记录](./docs/build_hang_issue_record.md)。
+- **pnpm**：作为本项目专属的包管理器。
+- **图像处理内核**：
+  - **piexifjs**：在内存中纯前端化注入、修改图片 EXIF 原始元数据。
+  - **Konva.js**：用于多层 Canvas 的控制以及水印排样的高性能重绘合并。
+
 ## 安装依赖
 ```
 pnpm install
