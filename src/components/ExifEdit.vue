@@ -69,12 +69,16 @@
         <button class="inline-flex items-center gap-1 rounded-full bg-white px-4 py-2 text-xs text-slate-700 shadow-[1px_5px_10px_rgba(7,163,255,0.25)] transition hover:shadow-[2px_5px_10px_rgba(7,163,255,0.31)]" @click="handleResetClick">
           <EIcon name="reset"></EIcon><span>重置</span>
         </button>
-        <button class="inline-flex items-center gap-1 rounded-full bg-white px-4 py-2 text-xs text-slate-700 shadow-[1px_5px_10px_rgba(7,163,255,0.25)] transition hover:shadow-[2px_5px_10px_rgba(7,163,255,0.31)]" @click="handleCopyClick">
-          <EIcon name="copy"></EIcon><span>复制</span>
-        </button>
-        <button class="inline-flex items-center gap-1 rounded-full bg-white px-4 py-2 text-xs text-slate-700 shadow-[1px_5px_10px_rgba(7,163,255,0.25)] transition hover:shadow-[2px_5px_10px_rgba(7,163,255,0.31)]" @click="handlePasteClick">
-          <EIcon name="paste"></EIcon><span>粘贴</span>
-        </button>
+        <Tooltip text="按 Ctrl+C 复制">
+          <button class="inline-flex items-center gap-1 rounded-full bg-white px-4 py-2 text-xs text-slate-700 shadow-[1px_5px_10px_rgba(7,163,255,0.25)] transition hover:shadow-[2px_5px_10px_rgba(7,163,255,0.31)]" @click="handleCopyClick">
+            <EIcon name="copy"></EIcon><span>复制</span>
+          </button>
+        </Tooltip>
+        <Tooltip text="按 Ctrl+V 粘贴">
+          <button class="inline-flex items-center gap-1 rounded-full bg-white px-4 py-2 text-xs text-slate-700 shadow-[1px_5px_10px_rgba(7,163,255,0.25)] transition hover:shadow-[2px_5px_10px_rgba(7,163,255,0.31)]" @click="handlePasteClick">
+            <EIcon name="paste"></EIcon><span>粘贴</span>
+          </button>
+        </Tooltip>
         <button
           v-if="previewImageData"
           class="inline-flex items-center gap-1 rounded-full bg-[#07A3FF] px-6 py-2 text-xs text-white shadow-[1px_5px_10px_rgba(7,163,255,0.25)] transition hover:shadow-[2px_5px_10px_rgba(7,163,255,0.31)]"
@@ -85,19 +89,25 @@
       </div>
     </div>
   </div>
+
+  <!-- Toast 提示组件 -->
+  <Toast ref="toastRef" />
 </template>
 
 <script setup lang="ts">
 import piexifjs from 'piexifjs'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, onMounted } from 'vue'
 import { DEFAULT_EXIF, DEFAULT_EXIF_VERSION } from '@/config/const'
 import type { ExifForm } from '@/types/exif'
 import { imagePlaceholder } from '@/components/imagePlaceholder'
 import EIcon from '@/components/EIcon.vue'
 import ExifLabel from '@/components/ExifLabel.vue'
+import Tooltip from '@/components/Tooltip.vue'
 import { cloneDeep, isObjectKeySame } from '@/utils/common'
 import { createObjectURL, revokeObjectURL } from '@/utils/file'
 import { captureException, captureMessage } from '@/utils/sentry'
+import { useKeyboardShortcuts, CommonShortcuts, createShortcutId } from '@/utils/keyboard'
+import { registerToast, showSuccess, showError, showInfo } from '@/utils/toast'
 
 const props = defineProps<{
   b64?: string
@@ -118,6 +128,29 @@ const exif = ref<ExifForm>(cloneDeep(defaultExif))
 const fileRef = ref<File | null>(null)
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const loading = ref(false)
+
+// 使用键盘快捷键工具
+const { register } = useKeyboardShortcuts()
+
+// 在组件挂载时注册快捷键
+const registerShortcuts = () => {
+  // 注册复制快捷键 (Ctrl+C)
+  register(
+    createShortcutId('c', true, false),
+    handleCopyClick
+  )
+
+  // 注册粘贴快捷键 (Ctrl+V)
+  register(
+    createShortcutId('v', true, false),
+    handlePasteClick
+  )
+}
+
+// 注册 toast 实例
+onMounted(() => {
+  registerToast(toastRef.value)
+})
 
 const previewImageData = computed(() => props.b64 || imgData.value || null)
 
@@ -162,11 +195,13 @@ const removeNull = (obj: Record<string, unknown>) => {
   })
 }
 
+const toastRef = ref()
+
 const showNoExifToast = (value: ExifForm) => {
   const payload = cloneDeep(value) as Record<string, unknown>
   removeNull(payload)
   if (!Object.keys(payload).length) {
-    window.alert('当前图片未解析到 exif 数据')
+    showInfo('当前图片未解析到 exif 数据', 3000)
   }
 }
 
@@ -227,19 +262,19 @@ const handleResetClick = () => {
 const handleCopyClick = () => {
   if (!navigator.clipboard) {
     captureMessage('复制失败: navigator.clipboard is undefined')
-    window.alert('当前系统不支持使用剪贴板')
+    showError('当前系统不支持使用剪贴板')
     return
   }
   navigator.clipboard.writeText(JSON.stringify(exif.value)).catch((error: Error) => {
     captureException(error)
-    window.alert(`复制失败：${error.message}`)
+    showError(`复制失败：${error.message}`)
   })
 }
 
 const handlePasteClick = () => {
   if (!navigator.clipboard) {
     captureMessage('粘贴失败: navigator.clipboard is undefined')
-    window.alert('当前系统不支持使用剪贴板')
+    showError('当前系统不支持使用剪贴板')
     return
   }
   navigator.clipboard
@@ -250,28 +285,30 @@ const handlePasteClick = () => {
         payload = JSON.parse(exifStr) as ExifForm
       } catch (error) {
         captureException(error as Error)
-        window.alert('剪贴板参数不是 Exif 数据格式，请粘贴复制功能导出的 JSON 数据')
+        showError('剪贴板参数不是 Exif 数据格式，请粘贴复制功能导出的 JSON 数据')
         return
       }
       if (!payload || !isObjectKeySame(payload as Record<string, unknown>, defaultExif as Record<string, unknown>)) {
         captureException(new Error('exif is invalid'))
-        window.alert('剪贴板参数不是 Exif 数据格式，请粘贴复制功能导出的 JSON 数据')
+        showError('剪贴板参数不是 Exif 数据格式，请粘贴复制功能导出的 JSON 数据')
         return
       }
       exif.value = payload
+      showSuccess('粘贴成功')
     })
     .catch((error: Error) => {
       captureException(error)
-      window.alert(`粘贴失败：${error.message}`)
+      showError(`粘贴失败：${error.message}`)
     })
 }
 
 const handleSaveClick = () => {
   try {
     insertExif()
+    showSuccess('保存成功')
   } catch (error) {
     captureException(error as Error)
-    window.alert(`保存失败：${(error as Error).message}`)
+    showError(`保存失败：${(error as Error).message}`)
   }
 }
 
@@ -315,5 +352,6 @@ const handleFileChange = (e: Event) => {
 
 onMounted(() => {
   handleResetClick()
+  registerShortcuts()
 })
 </script>
